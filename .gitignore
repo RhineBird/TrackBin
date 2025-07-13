@@ -105,6 +105,7 @@ Thumbs.db
 # Project-specific files
 CLAUDE.md
 project.yaml
+claude-mcp-config.json
 
 # Supabase
 .supabase/
