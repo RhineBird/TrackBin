@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { itemsService, type ItemWithStock } from '../services/itemsService'
+import ItemModal from '../components/ItemModal/ItemModal'
+import type { Item } from '../types/database'
 import './Items.css'
 
 const Items: React.FC = () => {
@@ -7,6 +9,10 @@ const Items: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null)
+  const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
 
   const loadItems = async () => {
     try {
@@ -68,6 +74,43 @@ const Items: React.FC = () => {
     return 'In Stock'
   }
 
+  const handleAddItem = () => {
+    setModalMode('create')
+    setSelectedItem(null)
+    setModalOpen(true)
+  }
+
+  const handleEditItem = (item: ItemWithStock) => {
+    setModalMode('edit')
+    setSelectedItem(item as Item)
+    setModalOpen(true)
+  }
+
+  const handleDeleteItem = async (item: ItemWithStock) => {
+    if (!confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`)) {
+      return
+    }
+
+    try {
+      await itemsService.deleteItem(item.id)
+      showNotification('success', 'Item deleted successfully')
+      loadItems()
+    } catch (err) {
+      showNotification('error', err instanceof Error ? err.message : 'Failed to delete item')
+    }
+  }
+
+  const handleModalSave = () => {
+    const action = modalMode === 'create' ? 'created' : 'updated'
+    showNotification('success', `Item ${action} successfully`)
+    loadItems()
+  }
+
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message })
+    setTimeout(() => setNotification(null), 5000)
+  }
+
   if (loading && items.length === 0) {
     return (
       <div className="items-page">
@@ -86,6 +129,13 @@ const Items: React.FC = () => {
         <p>Manage your warehouse inventory and stock levels</p>
       </div>
 
+      {notification && (
+        <div className={`notification ${notification.type}`}>
+          {notification.message}
+          <button onClick={() => setNotification(null)} className="notification-close">×</button>
+        </div>
+      )}
+
       <div className="items-controls">
         <div className="search-box">
           <input
@@ -96,9 +146,14 @@ const Items: React.FC = () => {
             className="search-input"
           />
         </div>
-        <button className="btn-primary" onClick={loadItems}>
-          Refresh
-        </button>
+        <div className="controls-actions">
+          <button className="btn-success" onClick={handleAddItem}>
+            + Add Item
+          </button>
+          <button className="btn-primary" onClick={loadItems}>
+            Refresh
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -121,12 +176,13 @@ const Items: React.FC = () => {
               <th>Available</th>
               <th>Status</th>
               <th>Description</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {items.length === 0 && !loading ? (
               <tr>
-                <td colSpan={7} className="no-data">
+                <td colSpan={8} className="no-data">
                   {searchQuery ? 'No items found matching your search.' : 'No items found. Please add some items to get started.'}
                 </td>
               </tr>
@@ -154,6 +210,22 @@ const Items: React.FC = () => {
                   <td className="description-cell">
                     {item.description || '—'}
                   </td>
+                  <td className="actions-cell">
+                    <button 
+                      className="btn-edit"
+                      onClick={() => handleEditItem(item)}
+                      title="Edit item"
+                    >
+                      ✏️
+                    </button>
+                    <button 
+                      className="btn-delete"
+                      onClick={() => handleDeleteItem(item)}
+                      title="Delete item"
+                    >
+                      🗑️
+                    </button>
+                  </td>
                 </tr>
               ))
             )}
@@ -173,6 +245,14 @@ const Items: React.FC = () => {
           {searchQuery && ` matching "${searchQuery}"`}
         </p>
       </div>
+
+      <ItemModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={handleModalSave}
+        item={selectedItem}
+        mode={modalMode}
+      />
     </div>
   )
 }
