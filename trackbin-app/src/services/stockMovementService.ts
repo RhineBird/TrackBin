@@ -14,6 +14,7 @@ export interface BinWithLocation extends Bin {
 }
 
 export interface ItemStockLocation {
+  stock_entry_id: string
   item_id: string
   item_sku: string
   item_name: string
@@ -94,6 +95,7 @@ export const stockMovementService = {
     }
 
     return (data || []).map(entry => ({
+      stock_entry_id: entry.id,
       item_id: entry.items.id,
       item_sku: entry.items.sku,
       item_name: entry.items.name,

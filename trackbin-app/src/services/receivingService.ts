@@ -171,8 +171,33 @@ export const receivingService = {
     }))
   },
 
+  // Check if a reference code already exists
+  async checkReferenceCodeExists(referenceCode: string): Promise<boolean> {
+    const { data, error } = await supabase
+      .from('receipts')
+      .select('id')
+      .eq('reference_code', referenceCode)
+      .single()
+
+    if (error) {
+      // If error is "not found", reference code doesn't exist
+      if (error.code === 'PGRST116') {
+        return false
+      }
+      throw new Error(`Failed to check reference code: ${error.message}`)
+    }
+
+    return !!data
+  },
+
   // Create a new receipt with automatic stock updates
   async createReceipt(request: CreateReceiptRequest): Promise<Receipt> {
+    // Check if reference code already exists
+    const referenceExists = await this.checkReferenceCodeExists(request.reference_code)
+    if (referenceExists) {
+      throw new Error(`Receipt with reference code "${request.reference_code}" already exists`)
+    }
+
     // For now, create receipt and lines manually until we set up the database functions
     const receiptId = crypto.randomUUID()
     

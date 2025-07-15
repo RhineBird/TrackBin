@@ -9,6 +9,7 @@ const Items: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [showStockOnly, setShowStockOnly] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
@@ -18,7 +19,9 @@ const Items: React.FC = () => {
     try {
       setLoading(true)
       setError(null)
-      const data = await itemsService.getItemsWithStock()
+      const data = showStockOnly 
+        ? await itemsService.getItemsWithStockOnly()
+        : await itemsService.getItemsWithStock()
       setItems(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load items')
@@ -37,7 +40,7 @@ const Items: React.FC = () => {
     try {
       setLoading(true)
       setError(null)
-      const data = await itemsService.searchItems(query)
+      const data = await itemsService.searchItems(query, showStockOnly)
       setItems(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to search items')
@@ -58,7 +61,16 @@ const Items: React.FC = () => {
     return () => {
       subscription.unsubscribe()
     }
-  }, [])
+  }, [showStockOnly]) // Reload when toggle changes
+
+  // Handle toggle change
+  const handleToggleChange = (stockOnly: boolean) => {
+    setShowStockOnly(stockOnly)
+    // Clear search when toggling
+    if (searchQuery) {
+      setSearchQuery('')
+    }
+  }
 
   const getStockStatus = (available: number = 0, total: number = 0) => {
     if (total === 0) return 'out-of-stock'
@@ -146,6 +158,22 @@ const Items: React.FC = () => {
             className="search-input"
           />
         </div>
+        <div className="controls-middle">
+          <div className="stock-toggle">
+            <label className="toggle-label">
+              <input
+                type="checkbox"
+                checked={showStockOnly}
+                onChange={(e) => handleToggleChange(e.target.checked)}
+                className="toggle-checkbox"
+              />
+              <span className="toggle-slider"></span>
+              <span className="toggle-text">
+                {showStockOnly ? 'Items with Stock' : 'All Items'}
+              </span>
+            </label>
+          </div>
+        </div>
         <div className="controls-actions">
           <button className="btn-success" onClick={handleAddItem}>
             + Add Item
@@ -196,10 +224,10 @@ const Items: React.FC = () => {
                     <strong>{item.name}</strong>
                   </td>
                   <td>{item.unit}</td>
-                  <td className="quantity-cell">
+                  <td className={`quantity-cell ${(!item.total_quantity || item.total_quantity === 0) ? 'zero-stock' : ''}`}>
                     {item.total_quantity || 0}
                   </td>
-                  <td className="quantity-cell">
+                  <td className={`quantity-cell ${(!item.available_quantity || item.available_quantity === 0) ? 'zero-stock' : ''}`}>
                     {item.available_quantity || 0}
                   </td>
                   <td>
@@ -243,6 +271,7 @@ const Items: React.FC = () => {
         <p>
           Showing {items.length} item{items.length !== 1 ? 's' : ''}
           {searchQuery && ` matching "${searchQuery}"`}
+          {showStockOnly ? ' with stock' : ' (all items)'}
         </p>
       </div>
 

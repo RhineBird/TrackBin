@@ -208,7 +208,8 @@
   padding: 1rem;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 1rem;
 }
 
 .location-info {
@@ -225,6 +226,13 @@
 .location-path {
   color: #666;
   font-size: 0.8rem;
+}
+
+.location-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
 }
 
 .location-quantity {
@@ -248,7 +256,62 @@
 }
 
 .quantity.quarantined {
+  color: #ff6b35;
+}
+
+.quantity.damaged {
   color: #dc3545;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.available {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-badge.reserved {
+  background-color: #cce7ff;
+  color: #004085;
+}
+
+.status-badge.quarantined {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.damaged {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.location-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-status-change {
+  padding: 0.4rem 0.8rem;
+  background-color: #007acc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.btn-status-change:hover {
+  background-color: #005999;
 }
 
 .quantity.damaged {

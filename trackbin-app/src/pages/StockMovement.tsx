@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { stockMovementService, type StockMovementWithDetails, type ItemStockLocation, type BinWithLocation } from '../services/stockMovementService'
 import { itemsService } from '../services/itemsService'
+import StatusChangeModal from '../components/StatusChangeModal'
 import type { Item } from '../types/database'
 import './StockMovement.css'
 
@@ -21,6 +22,16 @@ const StockMovement: React.FC = () => {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+  const [statusChangeModalOpen, setStatusChangeModalOpen] = useState(false)
+  const [selectedStockEntry, setSelectedStockEntry] = useState<{
+    id: string
+    item_sku: string
+    item_name: string
+    bin_name: string
+    zone_name: string
+    quantity: number
+    status: 'available' | 'reserved' | 'quarantined' | 'damaged'
+  } | null>(null)
 
   const [formData, setFormData] = useState<MovementFormData>({
     item_id: '',
@@ -171,6 +182,29 @@ const StockMovement: React.FC = () => {
     setTimeout(() => setNotification(null), 5000)
   }
 
+  const handleStatusChange = (location: ItemStockLocation) => {
+    setSelectedStockEntry({
+      id: location.stock_entry_id,
+      item_sku: location.item_sku,
+      item_name: location.item_name,
+      bin_name: location.bin_name,
+      zone_name: location.zone_name,
+      quantity: location.quantity,
+      status: location.status
+    })
+    setStatusChangeModalOpen(true)
+  }
+
+  const handleStatusChanged = () => {
+    showNotification('success', 'Stock status updated successfully')
+    // Reload the item stock locations
+    if (formData.item_id) {
+      loadItemStockLocations(formData.item_id)
+    }
+    setStatusChangeModalOpen(false)
+    setSelectedStockEntry(null)
+  }
+
   const getAvailableQuantity = (binId: string): number => {
     const location = itemStockLocations.find(loc => loc.bin_id === binId && loc.status === 'available')
     return location ? location.quantity : 0
@@ -250,9 +284,23 @@ const StockMovement: React.FC = () => {
                         <strong>{location.bin_name}</strong>
                         <span className="location-path">{location.warehouse_name} → {location.zone_name}</span>
                       </div>
-                      <div className="location-quantity">
-                        <span className={`quantity ${location.status}`}>{location.quantity}</span>
-                        <span className="status">{location.status}</span>
+                      <div className="location-details">
+                        <div className="location-quantity">
+                          <span className={`quantity ${location.status}`}>{location.quantity}</span>
+                          <span className={`status-badge ${location.status}`}>
+                            {location.status.charAt(0).toUpperCase() + location.status.slice(1)}
+                          </span>
+                        </div>
+                        <div className="location-actions">
+                          <button
+                            type="button"
+                            className="btn-status-change"
+                            onClick={() => handleStatusChange(location)}
+                            title="Change Status"
+                          >
+                            Change Status
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -390,6 +438,13 @@ const StockMovement: React.FC = () => {
           )}
         </div>
       </div>
+
+      <StatusChangeModal
+        isOpen={statusChangeModalOpen}
+        onClose={() => setStatusChangeModalOpen(false)}
+        onStatusChanged={handleStatusChanged}
+        stockEntry={selectedStockEntry}
+      />
     </div>
   )
 }
