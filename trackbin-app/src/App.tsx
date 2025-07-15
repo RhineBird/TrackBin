@@ -7,6 +7,7 @@ import StockMovement from './pages/StockMovement'
 import Receiving from './pages/Receiving'
 import Shipments from './pages/Shipments'
 import AuditLogs from './pages/AuditLogs'
+import Users from './pages/Users'
 import './App.css'
 
 function App() {
@@ -20,7 +21,7 @@ function App() {
           <Route path="/move-stock" element={<StockMovement />} />
           <Route path="/shipments" element={<Shipments />} />
           <Route path="/audit-logs" element={<AuditLogs />} />
-          <Route path="/users" element={<div>Users & Roles Page</div>} />
+          <Route path="/users" element={<Users />} />
         </Routes>
       </Layout>
     </Router>

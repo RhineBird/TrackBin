@@ -4,12 +4,55 @@ export interface User {
   email: string
   password_hash: string
   role_id: string
+  is_active: boolean
+  last_login?: string
   created_at: string
+  created_by?: string
 }
 
 export interface Role {
   id: string
-  name: 'Admin' | 'Operator' | 'Viewer'
+  name: string
+  description: string
+  is_system_role: boolean
+  created_at: string
+}
+
+export interface Permission {
+  id: string
+  module: string
+  action: string
+  description: string
+}
+
+export interface RolePermission {
+  role_id: string
+  permission_id: string
+}
+
+export interface UserPermission {
+  user_id: string
+  permission_id: string
+  granted: boolean
+}
+
+export interface UserSession {
+  id: string
+  user_id: string
+  session_token: string
+  expires_at: string
+  ip_address?: string
+  user_agent?: string
+  created_at: string
+}
+
+export interface RoleAssignment {
+  id: string
+  user_id: string
+  role_id: string
+  assigned_by: string
+  assigned_at: string
+  reason: string
 }
 
 export interface Warehouse {
