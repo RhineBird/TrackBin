@@ -59,14 +59,20 @@ TrackBin is a comprehensive web-based inventory management solution designed for
 3. **Configure environment**
    ```bash
    cd trackbin-app
-   cp .env.local.example .env.local
+   cp .env.example .env.local
    ```
    
    Update `.env.local` with your Supabase credentials:
    ```env
-   VITE_SUPABASE_URL=your_supabase_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
    ```
+   
+   Get these values from your Supabase project dashboard:
+   - **Project URL**: Found in Project Settings → API
+   - **Anon Key**: Found in Project Settings → API
+   
+   ⚠️ **Security Note**: Never commit `.env.local` to version control. It contains sensitive credentials.
 
 4. **Install dependencies and start**
    ```bash
@@ -110,10 +116,37 @@ Key constraints:
 
 ## 🔐 Security
 
+### Environment Security
+- **Environment variables** for all sensitive configuration
+- **Template files** (`.env.example`, `claude-mcp-config.example.json`) for safe setup
+- **Enhanced .gitignore** patterns prevent credential leaks
+- **Never commit** actual environment files to version control
+
+### Database Security
 - **Row Level Security (RLS)** policies enforce role-based access
-- **Environment variables** for sensitive configuration
 - **Audit logging** for all inventory operations
+- **Foreign key constraints** maintain data integrity
+- **UUID-based IDs** prevent enumeration attacks
+
+### Application Security
 - **Session-based authentication** via Supabase Auth
+- **Role-based access control** (Admin, Operator, Viewer)
+- **Input validation** on all forms
+- **SQL injection protection** via Supabase client
+
+### Best Practices
+1. **Rotate keys regularly** - Update Supabase keys periodically
+2. **Use different environments** - Separate dev/staging/production credentials
+3. **Monitor access logs** - Review audit logs for suspicious activity
+4. **Backup sensitive data** - Store environment configs securely offline
+5. **Review permissions** - Regularly audit user roles and database policies
+
+### Environment Variables Reference
+- `VITE_SUPABASE_URL`: Your Supabase project URL
+- `VITE_SUPABASE_ANON_KEY`: Public anon key for client connections
+- `SUPABASE_ACCESS_TOKEN`: Private token for CLI/MCP (in claude-mcp-config.json)
+
+⚠️ **Critical**: The access token has admin privileges. Treat it like a password.
 
 ## 🚧 Development Status
 

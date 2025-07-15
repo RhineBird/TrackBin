@@ -16,6 +16,11 @@ node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*.local
+*.env
+*.env.local
+.env.backup
+.env.original
 
 # Logs
 npm-debug.log*
@@ -109,3 +114,54 @@ claude-mcp-config.json
 
 # Supabase
 .supabase/
+
+# Additional Security Patterns
+# API Keys and secrets
+**/secrets/
+**/keys/
+**/*secret*
+**/*key*
+**/*password*
+**/*credential*
+**/*token*
+!**/package.json
+!**/package-lock.json
+
+# Configuration files with sensitive data
+config.local.*
+config.production.*
+*.config.local.*
+*-config.local.*
+
+# Database dumps and backups
+*.sql.gz
+*.dump
+*.backup
+*.bak
+db_backup*
+database_*
+
+# SSL certificates and private keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Cloud provider credentials
+.aws/
+.gcp/
+.azure/
+**/serviceAccount.json
+**/credentials.json
+
+# IDE and editor specific sensitive files
+.vscode/settings.json
+.vscode/launch.json
+.idea/workspace.xml
+
+# Temporary credential files
+*.tmp
+*.temp
+auth_*
+session_*

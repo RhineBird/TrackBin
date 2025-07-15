@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { itemsService, type ItemWithStock } from '../services/itemsService'
+import ItemModal from '../components/ItemModal/ItemModal'
+import type { Item } from '../types/database'
 import './Items.css'
 
 const Items: React.FC = () => {
@@ -7,12 +9,19 @@ const Items: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [showStockOnly, setShowStockOnly] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null)
+  const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
 
   const loadItems = async () => {
     try {
       setLoading(true)
       setError(null)
-      const data = await itemsService.getItemsWithStock()
+      const data = showStockOnly 
+        ? await itemsService.getItemsWithStockOnly()
+        : await itemsService.getItemsWithStock()
       setItems(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load items')
@@ -31,7 +40,7 @@ const Items: React.FC = () => {
     try {
       setLoading(true)
       setError(null)
-      const data = await itemsService.searchItems(query)
+      const data = await itemsService.searchItems(query, showStockOnly)
       setItems(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to search items')
@@ -52,7 +61,16 @@ const Items: React.FC = () => {
     return () => {
       subscription.unsubscribe()
     }
-  }, [])
+  }, [showStockOnly]) // Reload when toggle changes
+
+  // Handle toggle change
+  const handleToggleChange = (stockOnly: boolean) => {
+    setShowStockOnly(stockOnly)
+    // Clear search when toggling
+    if (searchQuery) {
+      setSearchQuery('')
+    }
+  }
 
   const getStockStatus = (available: number = 0, total: number = 0) => {
     if (total === 0) return 'out-of-stock'
@@ -66,6 +84,43 @@ const Items: React.FC = () => {
     if (available === 0) return 'All Reserved'
     if (available < 10) return 'Low Stock'
     return 'In Stock'
+  }
+
+  const handleAddItem = () => {
+    setModalMode('create')
+    setSelectedItem(null)
+    setModalOpen(true)
+  }
+
+  const handleEditItem = (item: ItemWithStock) => {
+    setModalMode('edit')
+    setSelectedItem(item as Item)
+    setModalOpen(true)
+  }
+
+  const handleDeleteItem = async (item: ItemWithStock) => {
+    if (!confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`)) {
+      return
+    }
+
+    try {
+      await itemsService.deleteItem(item.id)
+      showNotification('success', 'Item deleted successfully')
+      loadItems()
+    } catch (err) {
+      showNotification('error', err instanceof Error ? err.message : 'Failed to delete item')
+    }
+  }
+
+  const handleModalSave = () => {
+    const action = modalMode === 'create' ? 'created' : 'updated'
+    showNotification('success', `Item ${action} successfully`)
+    loadItems()
+  }
+
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message })
+    setTimeout(() => setNotification(null), 5000)
   }
 
   if (loading && items.length === 0) {
@@ -86,6 +141,13 @@ const Items: React.FC = () => {
         <p>Manage your warehouse inventory and stock levels</p>
       </div>
 
+      {notification && (
+        <div className={`notification ${notification.type}`}>
+          {notification.message}
+          <button onClick={() => setNotification(null)} className="notification-close">×</button>
+        </div>
+      )}
+
       <div className="items-controls">
         <div className="search-box">
           <input
@@ -96,9 +158,30 @@ const Items: React.FC = () => {
             className="search-input"
           />
         </div>
-        <button className="btn-primary" onClick={loadItems}>
-          Refresh
-        </button>
+        <div className="controls-middle">
+          <div className="stock-toggle">
+            <label className="toggle-label">
+              <input
+                type="checkbox"
+                checked={showStockOnly}
+                onChange={(e) => handleToggleChange(e.target.checked)}
+                className="toggle-checkbox"
+              />
+              <span className="toggle-slider"></span>
+              <span className="toggle-text">
+                {showStockOnly ? 'Items with Stock' : 'All Items'}
+              </span>
+            </label>
+          </div>
+        </div>
+        <div className="controls-actions">
+          <button className="btn-success" onClick={handleAddItem}>
+            + Add Item
+          </button>
+          <button className="btn-primary" onClick={loadItems}>
+            Refresh
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -121,12 +204,13 @@ const Items: React.FC = () => {
               <th>Available</th>
               <th>Status</th>
               <th>Description</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {items.length === 0 && !loading ? (
               <tr>
-                <td colSpan={7} className="no-data">
+                <td colSpan={8} className="no-data">
                   {searchQuery ? 'No items found matching your search.' : 'No items found. Please add some items to get started.'}
                 </td>
               </tr>
@@ -140,10 +224,10 @@ const Items: React.FC = () => {
                     <strong>{item.name}</strong>
                   </td>
                   <td>{item.unit}</td>
-                  <td className="quantity-cell">
+                  <td className={`quantity-cell ${(!item.total_quantity || item.total_quantity === 0) ? 'zero-stock' : ''}`}>
                     {item.total_quantity || 0}
                   </td>
-                  <td className="quantity-cell">
+                  <td className={`quantity-cell ${(!item.available_quantity || item.available_quantity === 0) ? 'zero-stock' : ''}`}>
                     {item.available_quantity || 0}
                   </td>
                   <td>
@@ -153,6 +237,22 @@ const Items: React.FC = () => {
                   </td>
                   <td className="description-cell">
                     {item.description || '—'}
+                  </td>
+                  <td className="actions-cell">
+                    <button 
+                      className="btn-edit"
+                      onClick={() => handleEditItem(item)}
+                      title="Edit item"
+                    >
+                      ✏️
+                    </button>
+                    <button 
+                      className="btn-delete"
+                      onClick={() => handleDeleteItem(item)}
+                      title="Delete item"
+                    >
+                      🗑️
+                    </button>
                   </td>
                 </tr>
               ))
@@ -171,8 +271,17 @@ const Items: React.FC = () => {
         <p>
           Showing {items.length} item{items.length !== 1 ? 's' : ''}
           {searchQuery && ` matching "${searchQuery}"`}
+          {showStockOnly ? ' with stock' : ' (all items)'}
         </p>
       </div>
+
+      <ItemModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={handleModalSave}
+        item={selectedItem}
+        mode={modalMode}
+      />
     </div>
   )
 }
