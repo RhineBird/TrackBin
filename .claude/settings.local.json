@@ -3,7 +3,8 @@
     "allow": [
       "Bash(git rm:*)",
       "Bash(cd:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(node:*)"
     ],
     "deny": []
   }
