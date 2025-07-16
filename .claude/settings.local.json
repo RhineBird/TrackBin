@@ -4,7 +4,9 @@
       "Bash(git rm:*)",
       "Bash(cd:*)",
       "Bash(rm:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(cd:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }
