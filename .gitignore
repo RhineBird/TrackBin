@@ -165,3 +165,9 @@ database_*
 *.temp
 auth_*
 session_*
+
+# Deployment documentation with sensitive info
+trackbin-app/DEPLOYMENT.md
+
+# Claude Code local configuration
+.claude/
