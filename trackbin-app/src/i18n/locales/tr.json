@@ -1,0 +1,103 @@
+{
+  "common": {
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "success": "Başarılı",
+    "cancel": "İptal",
+    "save": "Kaydet",
+    "edit": "Düzenle",
+    "delete": "Sil",
+    "create": "Oluştur",
+    "search": "Ara",
+    "filter": "Filtre",
+    "actions": "İşlemler",
+    "confirm": "Onayla",
+    "yes": "Evet",
+    "no": "Hayır"
+  },
+  "navigation": {
+    "dashboard": "Kontrol Paneli",
+    "inventory": "Envanter",
+    "receiving": "Mal Kabul",
+    "move_stock": "Stok Taşıma",
+    "shipments": "Sevkiyat",
+    "audit_logs": "Denetim Kayıtları",
+    "users": "Kullanıcı ve Roller"
+  },
+  "auth": {
+    "sign_in": "Giriş Yap",
+    "sign_out": "Çıkış Yap",
+    "email": "E-posta",
+    "password": "Şifre",
+    "login": "Giriş",
+    "invalid_credentials": "Geçersiz e-posta veya şifre",
+    "welcome": "TrackBin'e Hoş Geldiniz"
+  },
+  "dashboard": {
+    "title": "Kontrol Paneli",
+    "overview": "Genel Bakış",
+    "recent_activity": "Son Aktiviteler",
+    "stock_levels": "Stok Seviyeleri",
+    "total_items": "Toplam Ürün",
+    "low_stock": "Düşük Stok",
+    "recent_movements": "Son Hareketler"
+  },
+  "inventory": {
+    "title": "Envanter",
+    "items": "Ürünler",
+    "sku": "SKU",
+    "name": "İsim",
+    "description": "Açıklama",
+    "unit": "Birim",
+    "quantity": "Miktar",
+    "location": "Konum",
+    "status": "Durum",
+    "add_item": "Ürün Ekle",
+    "edit_item": "Ürünü Düzenle"
+  },
+  "receiving": {
+    "title": "Mal Kabul",
+    "new_receipt": "Yeni Kabul",
+    "reference": "Referans",
+    "supplier": "Tedarikçi",
+    "date": "Tarih",
+    "items": "Ürünler",
+    "expected": "Beklenen",
+    "received": "Alınan"
+  },
+  "stock_movement": {
+    "title": "Stok Hareketi",
+    "move_stock": "Stok Taşı",
+    "from": "Kaynak",
+    "to": "Hedef",
+    "reason": "Sebep",
+    "quantity": "Miktar",
+    "history": "Hareket Geçmişi"
+  },
+  "shipments": {
+    "title": "Sevkiyat",
+    "new_shipment": "Yeni Sevkiyat",
+    "customer": "Müşteri",
+    "tracking": "Takip",
+    "shipped": "Sevk Edildi",
+    "pending": "Beklemede"
+  },
+  "audit": {
+    "title": "Denetim Kayıtları",
+    "action": "İşlem",
+    "user": "Kullanıcı",
+    "timestamp": "Zaman",
+    "details": "Detaylar",
+    "entity": "Varlık"
+  },
+  "users": {
+    "title": "Kullanıcı ve Roller",
+    "add_user": "Kullanıcı Ekle",
+    "name": "İsim",
+    "email": "E-posta",
+    "role": "Rol",
+    "status": "Durum",
+    "active": "Aktif",
+    "inactive": "Pasif"
+  }
+}
