@@ -24,13 +24,10 @@ export const authService = {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const { email, password } = credentials
 
-    // Get user with role
+    // Get user with role - using two separate queries to avoid join issues
     const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select(`
-        *,
-        roles!inner(id, name, description, is_system_role)
-      `)
+      .from('app_users')
+      .select('*')
       .eq('email', email)
       .eq('is_active', true)
       .single()
@@ -39,25 +36,43 @@ export const authService = {
       throw new Error('Invalid email or password')
     }
 
+    // Get the role separately
+    const { data: roleData, error: roleError } = await supabase
+      .from('roles')
+      .select('id, name, description, is_system_role')
+      .eq('id', userData.role_id)
+      .single()
+
+    if (roleError || !roleData) {
+      throw new Error('Invalid email or password')
+    }
+
+    // Combine user and role data
+    const userWithRole = {
+      ...userData,
+      roles: roleData
+    }
+
     // Verify password
-    const isValidPassword = await this.verifyPassword(password, userData.password_hash)
+    const isValidPassword = await this.verifyPassword(password, userWithRole.password_hash)
+    
     if (!isValidPassword) {
       throw new Error('Invalid email or password')
     }
 
     // Create session
-    const session = await this.createSession(userData.id)
+    const session = await this.createSession(userWithRole.id)
 
     // Update last login
     await supabase
-      .from('users')
+      .from('app_users')
       .update({ last_login: new Date().toISOString() })
-      .eq('id', userData.id)
+      .eq('id', userWithRole.id)
 
     // Transform user data
     const user = {
-      ...userData,
-      role: userData.roles,
+      ...userWithRole,
+      role: userWithRole.roles,
       roles: undefined
     }
 
@@ -83,22 +98,38 @@ export const authService = {
   async verifySession(sessionToken: string): Promise<LoginResponse | null> {
     if (!sessionToken) return null
 
-    // Get session with user data
+    // Get session with user data - using separate queries to avoid join issues
     const { data: sessionData, error: sessionError } = await supabase
       .from('user_sessions')
-      .select(`
-        *,
-        users!inner(
-          *,
-          roles!inner(id, name, description, is_system_role)
-        )
-      `)
+      .select('*')
       .eq('session_token', sessionToken)
-      .eq('users.is_active', true)
       .gt('expires_at', new Date().toISOString())
       .single()
 
     if (sessionError || !sessionData) {
+      return null
+    }
+
+    // Get user data separately
+    const { data: userData, error: userError } = await supabase
+      .from('app_users')
+      .select('*')
+      .eq('id', sessionData.user_id)
+      .eq('is_active', true)
+      .single()
+
+    if (userError || !userData) {
+      return null
+    }
+
+    // Get role data separately
+    const { data: roleData, error: roleError } = await supabase
+      .from('roles')
+      .select('id, name, description, is_system_role')
+      .eq('id', userData.role_id)
+      .single()
+
+    if (roleError || !roleData) {
       return null
     }
 
@@ -110,14 +141,14 @@ export const authService = {
 
     // Transform data
     const user = {
-      ...sessionData.users,
-      role: sessionData.users.roles,
+      ...userData,
+      role: roleData,
       roles: undefined
     }
 
     const session = {
       ...sessionData,
-      users: undefined
+      app_users: undefined
     }
 
     return { user, session }

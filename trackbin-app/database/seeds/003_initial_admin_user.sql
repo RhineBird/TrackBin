@@ -5,7 +5,7 @@
 -- NOTE: Change these values before running in production!
 \set admin_email 'admin@trackbin.com'
 \set admin_name 'System Administrator'
-\set admin_password 'TrackBin2024!' -- This should be changed immediately after first login
+\set admin_password 'TrackBin2025!' -- This should be changed immediately after first login
 
 -- Get the System Administrator role ID
 DO $$
