@@ -160,7 +160,7 @@ export const dashboardService = {
         entity: log.entity,
         entity_id: log.entity_id,
         timestamp: log.timestamp,
-        user_name: log.users?.name,
+        user_name: (log.users as any)?.name || 'Unknown',
         details: log.details_json
       }))
     } catch (error) {

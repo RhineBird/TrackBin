@@ -9,7 +9,7 @@ interface MovementFormData {
   item_id: string
   from_bin_id: string
   to_bin_id: string
-  quantity: number
+  quantity: number | string
   reason: string
 }
 
@@ -131,7 +131,7 @@ const StockMovement: React.FC = () => {
       errors.to_bin_id = 'Destination must be different from source'
     }
 
-    if (!formData.quantity || formData.quantity <= 0) {
+    if (!formData.quantity || Number(formData.quantity) <= 0) {
       errors.quantity = 'Quantity must be greater than 0'
     }
 
@@ -154,7 +154,10 @@ const StockMovement: React.FC = () => {
     setError(null)
 
     try {
-      await stockMovementService.moveStock(formData)
+      await stockMovementService.moveStock({
+        ...formData,
+        quantity: Number(formData.quantity)
+      })
       
       showNotification('success', 'Stock moved successfully')
       
