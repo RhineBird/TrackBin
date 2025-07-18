@@ -70,6 +70,10 @@
   padding: 1rem;
 }
 
+.language-selector-container {
+  margin-bottom: 1rem;
+}
+
 .user-info {
   display: flex;
   align-items: center;
@@ -140,32 +144,74 @@
   .sidebar {
     width: 100%;
     height: auto;
+    border-right: none;
+    border-bottom: 1px solid #333;
+  }
+  
+  .sidebar-header {
+    padding: 0.75rem 1rem;
+    text-align: center;
+  }
+  
+  .sidebar-header h2 {
+    font-size: 1.25rem;
   }
   
   .sidebar-nav {
     display: flex;
     overflow-x: auto;
     padding: 0.5rem;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+  }
+  
+  .sidebar-nav::-webkit-scrollbar {
+    display: none; /* WebKit */
   }
   
   .nav-item {
     flex-shrink: 0;
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1rem;
     border-left: none;
     border-bottom: 3px solid transparent;
+    min-height: 44px; /* iOS minimum touch target */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    border-radius: 6px;
+    margin-right: 0.5rem;
+  }
+  
+  .nav-item:hover {
+    background-color: #2a2a2a;
   }
   
   .nav-item.active {
     border-left: none;
     border-bottom-color: #007acc;
+    background-color: #2a2a2a;
+  }
+  
+  .nav-icon {
+    margin-right: 0.5rem;
+    font-size: 1rem;
+  }
+  
+  .nav-label {
+    font-size: 0.9rem;
   }
   
   .sidebar-footer {
-    padding: 0.5rem;
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
   
   .user-info {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0;
+    flex: 1;
   }
   
   .user-avatar {
@@ -174,12 +220,59 @@
     margin-right: 0.5rem;
   }
   
+  .user-name {
+    font-size: 0.85rem;
+  }
+  
+  .user-role {
+    font-size: 0.75rem;
+  }
+  
   .sign-out-btn {
-    padding: 0.5rem;
+    padding: 0.5rem 0.75rem;
     font-size: 0.8rem;
+    margin-left: 1rem;
+    min-height: 44px;
   }
   
   .main-content {
     padding: 1rem;
+    min-height: calc(100vh - 200px); /* Adjust based on sidebar height */
+  }
+}
+
+/* Smaller mobile devices */
+@media (max-width: 480px) {
+  .sidebar-header h2 {
+    font-size: 1.1rem;
+  }
+  
+  .nav-item {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .nav-label {
+    font-size: 0.85rem;
+  }
+  
+  .main-content {
+    padding: 0.75rem;
+  }
+  
+  .sidebar-footer {
+    padding: 0.5rem;
+  }
+  
+  .user-name {
+    font-size: 0.8rem;
+  }
+  
+  .user-role {
+    font-size: 0.7rem;
+  }
+  
+  .sign-out-btn {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.75rem;
   }
 }

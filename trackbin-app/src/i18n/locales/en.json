@@ -1,0 +1,103 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "actions": "Actions",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "inventory": "Inventory",
+    "receiving": "Receiving",
+    "move_stock": "Move Stock",
+    "shipments": "Shipments",
+    "audit_logs": "Audit Logs",
+    "users": "Users & Roles"
+  },
+  "auth": {
+    "sign_in": "Sign In",
+    "sign_out": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "login": "Login",
+    "invalid_credentials": "Invalid email or password",
+    "welcome": "Welcome to TrackBin"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "overview": "Overview",
+    "recent_activity": "Recent Activity",
+    "stock_levels": "Stock Levels",
+    "total_items": "Total Items",
+    "low_stock": "Low Stock",
+    "recent_movements": "Recent Movements"
+  },
+  "inventory": {
+    "title": "Inventory",
+    "items": "Items",
+    "sku": "SKU",
+    "name": "Name",
+    "description": "Description",
+    "unit": "Unit",
+    "quantity": "Quantity",
+    "location": "Location",
+    "status": "Status",
+    "add_item": "Add Item",
+    "edit_item": "Edit Item"
+  },
+  "receiving": {
+    "title": "Receiving",
+    "new_receipt": "New Receipt",
+    "reference": "Reference",
+    "supplier": "Supplier",
+    "date": "Date",
+    "items": "Items",
+    "expected": "Expected",
+    "received": "Received"
+  },
+  "stock_movement": {
+    "title": "Stock Movement",
+    "move_stock": "Move Stock",
+    "from": "From",
+    "to": "To",
+    "reason": "Reason",
+    "quantity": "Quantity",
+    "history": "Movement History"
+  },
+  "shipments": {
+    "title": "Shipments",
+    "new_shipment": "New Shipment",
+    "customer": "Customer",
+    "tracking": "Tracking",
+    "shipped": "Shipped",
+    "pending": "Pending"
+  },
+  "audit": {
+    "title": "Audit Logs",
+    "action": "Action",
+    "user": "User",
+    "timestamp": "Timestamp",
+    "details": "Details",
+    "entity": "Entity"
+  },
+  "users": {
+    "title": "Users & Roles",
+    "add_user": "Add User",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive"
+  }
+}

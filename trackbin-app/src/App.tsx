@@ -10,10 +10,19 @@ import Shipments from './pages/Shipments'
 import AuditLogs from './pages/AuditLogs'
 import Users from './pages/Users'
 import { authService } from './services/authService'
+import { I18nProvider } from './i18n/i18nContext'
 import type { User, Role } from './types/database'
 import './App.css'
 
 function App() {
+  return (
+    <I18nProvider>
+      <AppContent />
+    </I18nProvider>
+  )
+}
+
+function AppContent() {
   const [user, setUser] = useState<(User & { role: Role }) | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
