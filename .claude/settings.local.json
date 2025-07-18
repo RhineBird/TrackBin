@@ -6,7 +6,17 @@
       "Bash(rm:*)",
       "Bash(node:*)",
       "Bash(cd:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(find:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(npx:*)",
+      "Bash(cd:*)",
+      "Bash(env)"
     ],
     "deny": []
   }

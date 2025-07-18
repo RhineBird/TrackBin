@@ -1,7 +1,13 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import type { User, Role } from '../../types/database'
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  user: User & { role: Role }
+  onSignOut: () => void
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ user, onSignOut }) => {
   const location = useLocation()
 
   const menuItems = [
@@ -31,6 +37,21 @@ const Sidebar: React.FC = () => {
           </Link>
         ))}
       </nav>
+      <div className="sidebar-footer">
+        <div className="user-info">
+          <div className="user-avatar">
+            {user.name.charAt(0).toUpperCase()}
+          </div>
+          <div className="user-details">
+            <div className="user-name">{user.name}</div>
+            <div className="user-role">{user.role.name}</div>
+          </div>
+        </div>
+        <button className="sign-out-btn" onClick={onSignOut}>
+          <span className="sign-out-icon">🚪</span>
+          <span className="sign-out-label">Sign Out</span>
+        </button>
+      </div>
     </div>
   )
 }

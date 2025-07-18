@@ -38,7 +38,7 @@ export const userService = {
   // Get all users with their roles
   async getUsers(): Promise<UserWithRole[]> {
     const { data, error } = await supabase
-      .from('users')
+      .from('app_users')
       .select(`
         *,
         roles!inner(id, name, description, is_system_role)
@@ -59,7 +59,7 @@ export const userService = {
   // Get single user by ID
   async getUserById(id: string): Promise<UserWithRole | null> {
     const { data, error } = await supabase
-      .from('users')
+      .from('app_users')
       .select(`
         *,
         roles!inner(id, name, description, is_system_role)
@@ -85,7 +85,7 @@ export const userService = {
   async createUser(request: CreateUserRequest): Promise<User> {
     // Check if email already exists
     const { data: existingUser } = await supabase
-      .from('users')
+      .from('app_users')
       .select('id')
       .eq('email', request.email)
       .single()
@@ -98,7 +98,7 @@ export const userService = {
     const passwordHash = await this.hashPassword(request.password)
 
     const { data, error } = await supabase
-      .from('users')
+      .from('app_users')
       .insert({
         name: request.name,
         email: request.email,

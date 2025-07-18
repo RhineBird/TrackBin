@@ -24,7 +24,7 @@ ADD COLUMN IF NOT EXISTS is_system_role BOOLEAN DEFAULT FALSE;
 ALTER TABLE roles ALTER COLUMN name TYPE VARCHAR(100);
 
 -- Create permissions table
-CREATE TABLE permissions (
+CREATE TABLE IF NOT EXISTS permissions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   module VARCHAR(50) NOT NULL,
   action VARCHAR(50) NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE permissions (
 );
 
 -- Create role_permissions junction table
-CREATE TABLE role_permissions (
+CREATE TABLE IF NOT EXISTS role_permissions (
   role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
   permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
   created_at TIMESTAMP DEFAULT NOW(),
@@ -42,7 +42,7 @@ CREATE TABLE role_permissions (
 );
 
 -- Create user_permissions table for individual overrides
-CREATE TABLE user_permissions (
+CREATE TABLE IF NOT EXISTS user_permissions (
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
   granted BOOLEAN NOT NULL DEFAULT TRUE,
@@ -52,7 +52,7 @@ CREATE TABLE user_permissions (
 );
 
 -- Create user_sessions table for session management
-CREATE TABLE user_sessions (
+CREATE TABLE IF NOT EXISTS user_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   session_token VARCHAR(255) NOT NULL UNIQUE,
@@ -64,7 +64,7 @@ CREATE TABLE user_sessions (
 );
 
 -- Create role_assignments table for audit trail
-CREATE TABLE role_assignments (
+CREATE TABLE IF NOT EXISTS role_assignments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
@@ -75,7 +75,7 @@ CREATE TABLE role_assignments (
 );
 
 -- Create stock_status_history table for stock status audit
-CREATE TABLE stock_status_history (
+CREATE TABLE IF NOT EXISTS stock_status_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stock_entry_id UUID NOT NULL REFERENCES stock_entries(id) ON DELETE CASCADE,
   old_status VARCHAR(20) NOT NULL,
@@ -86,45 +86,67 @@ CREATE TABLE stock_status_history (
 );
 
 -- Create indexes for performance
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_role_id ON users(role_id);
-CREATE INDEX idx_users_is_active ON users(is_active);
-CREATE INDEX idx_users_last_login ON users(last_login);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role_id ON users(role_id);
+CREATE INDEX IF NOT EXISTS idx_users_is_active ON users(is_active);
+CREATE INDEX IF NOT EXISTS idx_users_last_login ON users(last_login);
 
-CREATE INDEX idx_permissions_module ON permissions(module);
-CREATE INDEX idx_permissions_action ON permissions(action);
-CREATE INDEX idx_permissions_module_action ON permissions(module, action);
+CREATE INDEX IF NOT EXISTS idx_permissions_module ON permissions(module);
+CREATE INDEX IF NOT EXISTS idx_permissions_action ON permissions(action);
+CREATE INDEX IF NOT EXISTS idx_permissions_module_action ON permissions(module, action);
 
-CREATE INDEX idx_role_permissions_role_id ON role_permissions(role_id);
-CREATE INDEX idx_role_permissions_permission_id ON role_permissions(permission_id);
+CREATE INDEX IF NOT EXISTS idx_role_permissions_role_id ON role_permissions(role_id);
+CREATE INDEX IF NOT EXISTS idx_role_permissions_permission_id ON role_permissions(permission_id);
 
-CREATE INDEX idx_user_permissions_user_id ON user_permissions(user_id);
-CREATE INDEX idx_user_permissions_permission_id ON user_permissions(permission_id);
+CREATE INDEX IF NOT EXISTS idx_user_permissions_user_id ON user_permissions(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_permissions_permission_id ON user_permissions(permission_id);
 
-CREATE INDEX idx_user_sessions_user_id ON user_sessions(user_id);
-CREATE INDEX idx_user_sessions_token ON user_sessions(session_token);
-CREATE INDEX idx_user_sessions_expires_at ON user_sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(session_token);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions(expires_at);
 
-CREATE INDEX idx_role_assignments_user_id ON role_assignments(user_id);
-CREATE INDEX idx_role_assignments_role_id ON role_assignments(role_id);
-CREATE INDEX idx_role_assignments_assigned_at ON role_assignments(assigned_at);
+CREATE INDEX IF NOT EXISTS idx_role_assignments_user_id ON role_assignments(user_id);
+CREATE INDEX IF NOT EXISTS idx_role_assignments_role_id ON role_assignments(role_id);
+CREATE INDEX IF NOT EXISTS idx_role_assignments_assigned_at ON role_assignments(assigned_at);
 
-CREATE INDEX idx_stock_status_history_stock_entry_id ON stock_status_history(stock_entry_id);
-CREATE INDEX idx_stock_status_history_changed_at ON stock_status_history(changed_at);
-CREATE INDEX idx_stock_status_history_changed_by ON stock_status_history(changed_by_user_id);
+CREATE INDEX IF NOT EXISTS idx_stock_status_history_stock_entry_id ON stock_status_history(stock_entry_id);
+CREATE INDEX IF NOT EXISTS idx_stock_status_history_changed_at ON stock_status_history(changed_at);
+CREATE INDEX IF NOT EXISTS idx_stock_status_history_changed_by ON stock_status_history(changed_by_user_id);
 
--- Add constraints for data integrity
-ALTER TABLE users ADD CONSTRAINT users_email_unique UNIQUE (email);
-ALTER TABLE users ADD CONSTRAINT users_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
-
-ALTER TABLE permissions ADD CONSTRAINT permissions_module_not_empty CHECK (module != '');
-ALTER TABLE permissions ADD CONSTRAINT permissions_action_not_empty CHECK (action != '');
-
-ALTER TABLE user_sessions ADD CONSTRAINT user_sessions_expires_future CHECK (expires_at > created_at);
-
-ALTER TABLE stock_status_history ADD CONSTRAINT stock_status_history_status_valid 
-  CHECK (old_status IN ('available', 'reserved', 'quarantined', 'damaged') AND 
-         new_status IN ('available', 'reserved', 'quarantined', 'damaged'));
+-- Add constraints for data integrity (with IF NOT EXISTS equivalent for constraints)
+DO $$
+BEGIN
+  -- Add unique constraint for email if it doesn't exist
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_email_unique') THEN
+    ALTER TABLE users ADD CONSTRAINT users_email_unique UNIQUE (email);
+  END IF;
+  
+  -- Add email format constraint if it doesn't exist
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_email_format') THEN
+    ALTER TABLE users ADD CONSTRAINT users_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
+  END IF;
+  
+  -- Add permissions constraints if they don't exist
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'permissions_module_not_empty') THEN
+    ALTER TABLE permissions ADD CONSTRAINT permissions_module_not_empty CHECK (module != '');
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'permissions_action_not_empty') THEN
+    ALTER TABLE permissions ADD CONSTRAINT permissions_action_not_empty CHECK (action != '');
+  END IF;
+  
+  -- Add user sessions constraint if it doesn't exist
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'user_sessions_expires_future') THEN
+    ALTER TABLE user_sessions ADD CONSTRAINT user_sessions_expires_future CHECK (expires_at > created_at);
+  END IF;
+  
+  -- Add stock status history constraint if it doesn't exist
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_status_history_status_valid') THEN
+    ALTER TABLE stock_status_history ADD CONSTRAINT stock_status_history_status_valid 
+      CHECK (old_status IN ('available', 'reserved', 'quarantined', 'damaged') AND 
+             new_status IN ('available', 'reserved', 'quarantined', 'damaged'));
+  END IF;
+END $$;
 
 -- Create a function to automatically clean up expired sessions
 CREATE OR REPLACE FUNCTION cleanup_expired_sessions()

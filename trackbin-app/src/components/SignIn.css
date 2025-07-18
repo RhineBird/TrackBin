@@ -121,6 +121,44 @@
   transform: translateY(0);
 }
 
+/* Error styling */
+.error-message {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.field-error {
+  color: #dc2626;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.form-input-error {
+  border-color: #dc2626 !important;
+}
+
+.form-input-error:focus {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+}
+
+.signin-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.signin-button:disabled:hover {
+  background: #9ca3af;
+  transform: none;
+  box-shadow: 0 4px 12px rgba(156, 163, 175, 0.3);
+}
+
 /* Responsive design */
 @media (max-width: 480px) {
   .signin-container {
