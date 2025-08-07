@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { shipmentsService, type ShipmentWithDetails, type CreateShipmentRequest, type AvailableStock } from '../services/shipmentsService'
+import { useAuth } from '../contexts/AuthContext'
 import { useI18n } from '../i18n/hooks'
 import './Shipments.css'
 
@@ -18,6 +19,7 @@ interface ShipmentFormData {
 }
 
 const Shipments: React.FC = () => {
+  const { getCurrentUserId } = useAuth()
   const { t } = useI18n()
   const [shipments, setShipments] = useState<ShipmentWithDetails[]>([])
   const [availableStock, setAvailableStock] = useState<AvailableStock[]>([])
@@ -173,6 +175,12 @@ const Shipments: React.FC = () => {
       return
     }
 
+    const currentUserId = getCurrentUserId()
+    if (!currentUserId) {
+      setError('User not authenticated')
+      return
+    }
+
     setSubmitting(true)
     setError(null)
 
@@ -184,7 +192,8 @@ const Shipments: React.FC = () => {
           item_id: line.item_id,
           quantity: line.quantity,
           bin_id: line.bin_id
-        }))
+        })),
+        user_id: currentUserId
       }
 
       await shipmentsService.createShipment(request)

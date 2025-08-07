@@ -26,12 +26,10 @@ export interface AuditFilters {
 export const auditService = {
   // Get audit logs with optional filters
   async getAuditLogs(filters: AuditFilters = {}, limit: number = 50): Promise<AuditLogWithDetails[]> {
+    // First, try with the foreign key join
     let query = supabase
       .from('audit_logs')
-      .select(`
-        *,
-        users(name)
-      `)
+      .select('*')
       .order('timestamp', { ascending: false })
 
     // Apply filters
@@ -59,29 +57,51 @@ export const auditService = {
       query = query.limit(limit)
     }
 
-    const { data, error } = await query
+    const { data: auditData, error } = await query
 
     if (error) {
       throw new Error(`Failed to fetch audit logs: ${error.message}`)
     }
 
-    return (data || []).map(log => ({
+    if (!auditData || auditData.length === 0) {
+      return []
+    }
+
+    // Get unique user IDs to fetch user names
+    const userIds = [...new Set(auditData.map(log => log.user_id).filter(Boolean))]
+    let userMap: Record<string, string> = {}
+
+    if (userIds.length > 0) {
+      try {
+        const { data: userData } = await supabase
+          .from('app_users')
+          .select('id, name')
+          .in('id', userIds)
+        
+        if (userData) {
+          userMap = userData.reduce((acc, user) => {
+            acc[user.id] = user.name
+            return acc
+          }, {} as Record<string, string>)
+        }
+      } catch (userError) {
+        console.warn('Could not fetch user names:', userError)
+      }
+    }
+
+    return auditData.map(log => ({
       ...log,
-      user_name: log.details_json?.performed_by || log.users?.name || (log.user_id === '00000000-0000-0000-0000-000000000000' ? 'System' : 'Unknown'),
-      entity_details: this.formatEntityDetails(log.entity, log.details_json),
-      users: undefined
+      user_name: log.details_json?.performed_by || userMap[log.user_id] || (log.user_id === '00000000-0000-0000-0000-000000000000' ? 'System' : 'Unknown'),
+      entity_details: this.formatEntityDetails(log.entity, log.details_json)
     }))
   },
 
   // Search audit logs by various criteria
   async searchAuditLogs(searchQuery: string, limit: number = 50): Promise<AuditLogWithDetails[]> {
-    const { data, error } = await supabase
+    const { data: auditData, error } = await supabase
       .from('audit_logs')
-      .select(`
-        *,
-        users(name)
-      `)
-      .or(`entity.ilike.%${searchQuery}%,action_type.ilike.%${searchQuery}%,users.name.ilike.%${searchQuery}%`)
+      .select('*')
+      .or(`entity.ilike.%${searchQuery}%,action_type.ilike.%${searchQuery}%`)
       .order('timestamp', { ascending: false })
       .limit(limit)
 
@@ -89,11 +109,44 @@ export const auditService = {
       throw new Error(`Failed to search audit logs: ${error.message}`)
     }
 
-    return (data || []).map(log => ({
+    if (!auditData || auditData.length === 0) {
+      return []
+    }
+
+    // Get unique user IDs to fetch user names
+    const userIds = [...new Set(auditData.map(log => log.user_id).filter(Boolean))]
+    let userMap: Record<string, string> = {}
+
+    if (userIds.length > 0) {
+      try {
+        const { data: userData } = await supabase
+          .from('app_users')
+          .select('id, name')
+          .in('id', userIds)
+        
+        if (userData) {
+          userMap = userData.reduce((acc, user) => {
+            acc[user.id] = user.name
+            return acc
+          }, {} as Record<string, string>)
+        }
+      } catch (userError) {
+        console.warn('Could not fetch user names:', userError)
+      }
+    }
+
+    // Filter by user name if search query might match names
+    const filteredData = auditData.filter(log => {
+      const userName = log.details_json?.performed_by || userMap[log.user_id] || ''
+      return userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             log.entity.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             log.action_type.toLowerCase().includes(searchQuery.toLowerCase())
+    })
+
+    return filteredData.map(log => ({
       ...log,
-      user_name: log.details_json?.performed_by || log.users?.name || (log.user_id === '00000000-0000-0000-0000-000000000000' ? 'System' : 'Unknown'),
-      entity_details: this.formatEntityDetails(log.entity, log.details_json),
-      users: undefined
+      user_name: log.details_json?.performed_by || userMap[log.user_id] || (log.user_id === '00000000-0000-0000-0000-000000000000' ? 'System' : 'Unknown'),
+      entity_details: this.formatEntityDetails(log.entity, log.details_json)
     }))
   },
 

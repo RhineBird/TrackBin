@@ -5,12 +5,14 @@ export interface StatusUpdateRequest {
   stockEntryId: string
   newStatus: 'available' | 'reserved' | 'quarantined' | 'damaged'
   reason: string
+  user_id: string
 }
 
 export interface BulkStatusUpdateRequest {
   stockEntryIds: string[]
   newStatus: 'available' | 'reserved' | 'quarantined' | 'damaged'
   reason: string
+  user_id: string
 }
 
 export interface StockStatusHistory {
@@ -99,7 +101,7 @@ export const stockStatusService = {
       old_status: currentEntry.status,
       new_status: request.newStatus,
       reason: request.reason,
-      changed_by_user_id: 'a0000000-0000-4000-8000-000000000001' // Default admin user for now
+      changed_by_user_id: request.user_id
     })
 
     return updatedEntry

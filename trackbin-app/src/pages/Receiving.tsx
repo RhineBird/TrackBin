@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { receivingService, type ReceiptWithDetails, type CreateReceiptRequest, type BinWithLocation } from '../services/receivingService'
 import { itemsService } from '../services/itemsService'
+import { useAuth } from '../contexts/AuthContext'
 import { useI18n } from '../i18n/hooks'
 import type { Item } from '../types/database'
 import './Receiving.css'
@@ -20,6 +21,7 @@ interface ReceiptFormData {
 }
 
 const Receiving: React.FC = () => {
+  const { getCurrentUserId } = useAuth()
   const { t } = useI18n()
   const [receipts, setReceipts] = useState<ReceiptWithDetails[]>([])
   const [items, setItems] = useState<Item[]>([])
@@ -166,6 +168,12 @@ const Receiving: React.FC = () => {
       return
     }
 
+    const currentUserId = getCurrentUserId()
+    if (!currentUserId) {
+      setError('User not authenticated')
+      return
+    }
+
     setSubmitting(true)
     setError(null)
 
@@ -178,7 +186,8 @@ const Receiving: React.FC = () => {
           quantity_expected: line.quantity_expected,
           quantity_received: line.quantity_received,
           bin_id: line.bin_id
-        }))
+        })),
+        user_id: currentUserId
       }
 
       await receivingService.createReceipt(request)

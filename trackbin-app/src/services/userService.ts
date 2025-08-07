@@ -14,6 +14,7 @@ export interface CreateUserRequest {
   email: string
   password: string
   role_id: string
+  created_by: string
 }
 
 export interface UpdateUserRequest {
@@ -21,6 +22,7 @@ export interface UpdateUserRequest {
   email?: string
   is_active?: boolean
   role_id?: string
+  updated_by?: string
 }
 
 export interface ChangePasswordRequest {
@@ -105,7 +107,7 @@ export const userService = {
         password_hash: passwordHash,
         role_id: request.role_id,
         is_active: true,
-        created_by: 'a0000000-0000-4000-8000-000000000001' // Default admin user
+        created_by: request.created_by
       })
       .select()
       .single()
@@ -115,7 +117,7 @@ export const userService = {
     }
 
     // Log role assignment
-    await this.logRoleAssignment(data.id, request.role_id, 'User created with initial role')
+    await this.logRoleAssignment(data.id, request.role_id, 'User created with initial role', request.created_by)
 
     return data
   },
@@ -130,7 +132,7 @@ export const userService = {
     // Check if email is being changed and if it already exists
     if (request.email && request.email !== currentUser.email) {
       const { data: existingUser } = await supabase
-        .from('users')
+        .from('app_users')
         .select('id')
         .eq('email', request.email)
         .neq('id', id)
@@ -142,7 +144,7 @@ export const userService = {
     }
 
     const { data, error } = await supabase
-      .from('users')
+      .from('app_users')
       .update(request)
       .eq('id', id)
       .select()
@@ -153,8 +155,8 @@ export const userService = {
     }
 
     // Log role assignment if role changed
-    if (request.role_id && request.role_id !== currentUser.role_id) {
-      await this.logRoleAssignment(id, request.role_id, 'Role updated')
+    if (request.role_id && request.role_id !== currentUser.role_id && request.updated_by) {
+      await this.logRoleAssignment(id, request.role_id, 'Role updated', request.updated_by)
     }
 
     return data
@@ -163,7 +165,7 @@ export const userService = {
   // Delete user (set inactive)
   async deleteUser(id: string): Promise<void> {
     const { error } = await supabase
-      .from('users')
+      .from('app_users')
       .update({ is_active: false })
       .eq('id', id)
 
@@ -189,7 +191,7 @@ export const userService = {
     const newPasswordHash = await this.hashPassword(request.new_password)
 
     const { error } = await supabase
-      .from('users')
+      .from('app_users')
       .update({ password_hash: newPasswordHash })
       .eq('id', userId)
 
@@ -284,7 +286,7 @@ export const userService = {
 
     // Check if role is in use
     const { data: usersWithRole, error: usersError } = await supabase
-      .from('users')
+      .from('app_users')
       .select('id')
       .eq('role_id', id)
       .limit(1)
@@ -399,13 +401,13 @@ export const userService = {
   },
 
   // Log role assignment
-  async logRoleAssignment(userId: string, roleId: string, reason: string): Promise<void> {
+  async logRoleAssignment(userId: string, roleId: string, reason: string, assignedBy: string): Promise<void> {
     const { error } = await supabase
       .from('role_assignments')
       .insert({
         user_id: userId,
         role_id: roleId,
-        assigned_by: 'a0000000-0000-4000-8000-000000000001', // Current user
+        assigned_by: assignedBy,
         assigned_at: new Date().toISOString(),
         reason
       })
@@ -432,7 +434,7 @@ export const userService = {
   // Search users
   async searchUsers(query: string): Promise<UserWithRole[]> {
     const { data, error } = await supabase
-      .from('users')
+      .from('app_users')
       .select(`
         *,
         roles!inner(id, name, description, is_system_role)
