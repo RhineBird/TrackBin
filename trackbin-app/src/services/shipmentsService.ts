@@ -52,6 +52,7 @@ export interface CreateShipmentRequest {
   reference_code: string
   customer: string
   shipment_lines: CreateShipmentLineRequest[]
+  user_id: string
 }
 
 export interface CreateShipmentLineRequest {
@@ -266,7 +267,7 @@ export const shipmentsService = {
         id: shipmentId,
         reference_code: request.reference_code,
         customer: request.customer,
-        shipped_by_user_id: 'a0000000-0000-4000-8000-000000000001' // Default admin user
+        shipped_by_user_id: request.user_id
       })
       .select()
       .single()
