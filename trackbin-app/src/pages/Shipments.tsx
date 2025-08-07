@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { shipmentsService, type ShipmentWithDetails, type CreateShipmentRequest, type AvailableStock } from '../services/shipmentsService'
+import { useI18n } from '../i18n/hooks'
 import './Shipments.css'
 
 interface ShipmentLineForm {
@@ -17,6 +18,7 @@ interface ShipmentFormData {
 }
 
 const Shipments: React.FC = () => {
+  const { t } = useI18n()
   const [shipments, setShipments] = useState<ShipmentWithDetails[]>([])
   const [availableStock, setAvailableStock] = useState<AvailableStock[]>([])
   const [loading, setLoading] = useState(true)
@@ -47,7 +49,7 @@ const Shipments: React.FC = () => {
       setShipments(shipmentsData)
       setAvailableStock(stockData)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data')
+      setError(err instanceof Error ? err.message : t('shipments.load_failed'))
     } finally {
       setLoading(false)
     }
@@ -134,29 +136,29 @@ const Shipments: React.FC = () => {
     const errors: {[key: string]: string} = {}
 
     if (!formData.reference_code.trim()) {
-      errors.reference_code = 'Reference code is required'
+      errors.reference_code = t('shipments.reference_required')
     }
 
     if (!formData.customer.trim()) {
-      errors.customer = 'Customer is required'
+      errors.customer = t('shipments.customer_required')
     }
 
     if (formData.shipment_lines.length === 0) {
-      errors.shipment_lines = 'At least one item is required'
+      errors.shipment_lines = t('shipments.items_required')
     }
 
     formData.shipment_lines.forEach(line => {
       if (!line.item_id) {
-        errors[`line_${line.id}_item_id`] = 'Item selection is required'
+        errors[`line_${line.id}_item_id`] = t('shipments.item_selection_required')
       }
       if (!line.bin_id) {
-        errors[`line_${line.id}_bin_id`] = 'Bin selection is required'
+        errors[`line_${line.id}_bin_id`] = t('shipments.bin_selection_required')
       }
       if (line.quantity <= 0) {
-        errors[`line_${line.id}_quantity`] = 'Quantity must be greater than 0'
+        errors[`line_${line.id}_quantity`] = t('shipments.quantity_required')
       }
       if (line.available_quantity !== undefined && line.quantity > line.available_quantity) {
-        errors[`line_${line.id}_quantity`] = `Only ${line.available_quantity} available in stock`
+        errors[`line_${line.id}_quantity`] = t('shipments.quantity_exceeds', { available: line.available_quantity })
       }
     })
 
@@ -187,7 +189,7 @@ const Shipments: React.FC = () => {
 
       await shipmentsService.createShipment(request)
       
-      showNotification('success', 'Shipment created successfully')
+      showNotification('success', t('shipments.shipment_created'))
       
       // Reset form
       setFormData({
@@ -200,7 +202,7 @@ const Shipments: React.FC = () => {
       // Reload data
       loadData()
     } catch (err) {
-      showNotification('error', err instanceof Error ? err.message : 'Failed to create shipment')
+      showNotification('error', err instanceof Error ? err.message : t('shipments.create_failed'))
     } finally {
       setSubmitting(false)
     }
@@ -234,7 +236,7 @@ const Shipments: React.FC = () => {
       <div className="shipments-page">
         <div className="loading">
           <div className="loading-spinner"></div>
-          <p>Loading shipments data...</p>
+          <p>{t('shipments.loading')}</p>
         </div>
       </div>
     )
@@ -243,8 +245,8 @@ const Shipments: React.FC = () => {
   return (
     <div className="shipments-page">
       <div className="page-header">
-        <h1>Shipments</h1>
-        <p>Manage outgoing shipments and update inventory</p>
+        <h1>{t('shipments.page_title')}</h1>
+        <p>{t('shipments.page_description')}</p>
       </div>
 
       {notification && (
@@ -258,15 +260,15 @@ const Shipments: React.FC = () => {
         <div className="search-section">
           <input
             type="text"
-            placeholder="Search shipments by reference or customer..."
+            placeholder={t('shipments.search_placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
             className="search-input"
           />
-          <button onClick={handleSearch} className="btn-secondary">Search</button>
+          <button onClick={handleSearch} className="btn-secondary">{t('shipments.search')}</button>
           {searchQuery && (
-            <button onClick={() => { setSearchQuery(''); loadData(); }} className="btn-secondary">Clear</button>
+            <button onClick={() => { setSearchQuery(''); loadData(); }} className="btn-secondary">{t('shipments.clear')}</button>
           )}
         </div>
         
@@ -274,24 +276,24 @@ const Shipments: React.FC = () => {
           onClick={() => setShowCreateForm(!showCreateForm)} 
           className="btn-primary"
         >
-          {showCreateForm ? 'Cancel' : 'New Shipment'}
+          {showCreateForm ? t('shipments.cancel') : t('shipments.new_shipment')}
         </button>
       </div>
 
       {showCreateForm && (
         <div className="create-shipment-section">
-          <h2>Create New Shipment</h2>
+          <h2>{t('shipments.create_new_shipment')}</h2>
           
           {error && (
             <div className="error-message">
-              <strong>Error:</strong> {error}
+              <strong>{t('common.error')}:</strong> {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="shipment-form">
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="reference_code">Reference Code *</label>
+                <label htmlFor="reference_code">{t('shipments.reference_code')} *</label>
                 <input
                   type="text"
                   id="reference_code"
@@ -305,7 +307,7 @@ const Shipments: React.FC = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="customer">Customer *</label>
+                <label htmlFor="customer">{t('shipments.customer')} *</label>
                 <input
                   type="text"
                   id="customer"
@@ -321,8 +323,8 @@ const Shipments: React.FC = () => {
 
             <div className="shipment-lines-section">
               <div className="section-header">
-                <h3>Items to Ship</h3>
-                <button type="button" onClick={addShipmentLine} className="btn-secondary">Add Item</button>
+                <h3>{t('shipments.items_to_ship')}</h3>
+                <button type="button" onClick={addShipmentLine} className="btn-secondary">{t('shipments.add_item')}</button>
               </div>
               
               {formErrors.shipment_lines && <span className="field-error">{formErrors.shipment_lines}</span>}
@@ -331,14 +333,14 @@ const Shipments: React.FC = () => {
                 <div key={line.id} className="shipment-line">
                   <div className="shipment-line-fields">
                     <div className="form-group">
-                      <label>Item *</label>
+                      <label>{t('shipments.item')} *</label>
                       <select
                         value={line.item_id}
                         onChange={(e) => updateShipmentLine(line.id, 'item_id', e.target.value)}
                         className={formErrors[`line_${line.id}_item_id`] ? 'error' : ''}
                         disabled={submitting}
                       >
-                        <option value="">Select an item</option>
+                        <option value="">{t('shipments.select_item')}</option>
                         {getUniqueItems().map(stock => (
                           <option key={stock.item_id} value={stock.item_id}>
                             {stock.item_sku} - {stock.item_name}
@@ -349,17 +351,17 @@ const Shipments: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                      <label>Bin Location *</label>
+                      <label>{t('shipments.bin_location')} *</label>
                       <select
                         value={line.bin_id}
                         onChange={(e) => updateShipmentLine(line.id, 'bin_id', e.target.value)}
                         className={formErrors[`line_${line.id}_bin_id`] ? 'error' : ''}
                         disabled={submitting || !line.item_id}
                       >
-                        <option value="">Select a bin</option>
+                        <option value="">{t('shipments.select_bin')}</option>
                         {getAvailableStockForItem(line.item_id).map(stock => (
                           <option key={`${stock.item_id}-${stock.bin_id}`} value={stock.bin_id}>
-                            {stock.bin_name} - {stock.zone_name} ({stock.available_quantity} available)
+                            {stock.bin_name} - {stock.zone_name} ({t('shipments.available_quantity', { quantity: stock.available_quantity })})
                           </option>
                         ))}
                       </select>
@@ -367,7 +369,7 @@ const Shipments: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                      <label>Quantity *</label>
+                      <label>{t('shipments.quantity')} *</label>
                       <input
                         type="number"
                         value={line.quantity || ''}
@@ -379,7 +381,7 @@ const Shipments: React.FC = () => {
                       />
                       {line.available_quantity !== undefined && (
                         <div className="quantity-info">
-                          Available: {line.available_quantity} {availableStock.find(s => s.item_id === line.item_id)?.item_unit || 'units'}
+                          {t('shipments.available_units', { quantity: line.available_quantity, unit: availableStock.find(s => s.item_id === line.item_id)?.item_unit || t('shipments.units') })}
                         </div>
                       )}
                       {formErrors[`line_${line.id}_quantity`] && <span className="field-error">{formErrors[`line_${line.id}_quantity`]}</span>}
@@ -393,7 +395,7 @@ const Shipments: React.FC = () => {
                       className="btn-danger-small"
                       disabled={submitting}
                     >
-                      Remove
+                      {t('shipments.remove')}
                     </button>
                   </div>
                 </div>
@@ -406,7 +408,7 @@ const Shipments: React.FC = () => {
                 className="btn-primary"
                 disabled={submitting}
               >
-                {submitting ? 'Creating Shipment...' : 'Create Shipment'}
+                {submitting ? t('shipments.creating_shipment') : t('shipments.create_shipment')}
               </button>
               <button 
                 type="button" 
@@ -414,7 +416,7 @@ const Shipments: React.FC = () => {
                 className="btn-secondary"
                 disabled={submitting}
               >
-                Cancel
+                {t('shipments.cancel')}
               </button>
             </div>
           </form>
@@ -422,22 +424,22 @@ const Shipments: React.FC = () => {
       )}
 
       <div className="shipments-section">
-        <h2>Recent Shipments</h2>
+        <h2>{t('shipments.recent_shipments')}</h2>
         
         {shipments.length === 0 ? (
           <div className="no-shipments">
-            <p>No shipments found. Create your first shipment to get started.</p>
+            <p>{t('shipments.no_shipments')}</p>
           </div>
         ) : (
           <div className="shipments-table-container">
             <table className="shipments-table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Reference</th>
-                  <th>Customer</th>
-                  <th>Items</th>
-                  <th>Total Qty</th>
+                  <th>{t('shipments.date')}</th>
+                  <th>{t('shipments.reference')}</th>
+                  <th>{t('shipments.customer')}</th>
+                  <th>{t('shipments.items')}</th>
+                  <th>{t('shipments.total_qty')}</th>
                 </tr>
               </thead>
               <tbody>

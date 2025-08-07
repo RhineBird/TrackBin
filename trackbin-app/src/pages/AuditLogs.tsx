@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { auditService, type AuditLogWithDetails, type AuditFilters } from '../services/auditService'
+import { useI18n } from '../i18n/hooks'
 import './AuditLogs.css'
 
 const AuditLogs: React.FC = () => {
+  const { t } = useI18n()
   const [auditLogs, setAuditLogs] = useState<AuditLogWithDetails[]>([])
   const [actionTypes, setActionTypes] = useState<string[]>([])
   const [entities, setEntities] = useState<string[]>([])
@@ -44,7 +46,7 @@ const AuditLogs: React.FC = () => {
       setEntities(entitiesData)
       setStats(statsData)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load audit logs')
+      setError(err instanceof Error ? err.message : t('audit.load_failed'))
     } finally {
       setLoading(false)
     }
@@ -74,7 +76,7 @@ const AuditLogs: React.FC = () => {
       const results = await auditService.searchAuditLogs(searchQuery, 100)
       setAuditLogs(results)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Search failed')
+      setError(err instanceof Error ? err.message : t('audit.search_failed'))
     } finally {
       setLoading(false)
     }
@@ -113,9 +115,9 @@ const AuditLogs: React.FC = () => {
       link.click()
       document.body.removeChild(link)
       
-      showNotification('success', 'Audit logs exported successfully')
+      showNotification('success', t('audit.export_success'))
     } catch (err) {
-      showNotification('error', err instanceof Error ? err.message : 'Export failed')
+      showNotification('error', err instanceof Error ? err.message : t('audit.export_failed'))
     } finally {
       setExporting(false)
     }
@@ -147,11 +149,11 @@ const AuditLogs: React.FC = () => {
     switch (action.toLowerCase()) {
       case 'create':
       case 'insert':
-        return 'Created'
+        return t('actions.created')
       case 'update':
-        return 'Updated'
+        return t('actions.updated')
       case 'delete':
-        return 'Deleted'
+        return t('actions.deleted')
       default:
         return action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
     }
@@ -162,7 +164,7 @@ const AuditLogs: React.FC = () => {
       <div className="audit-logs-page">
         <div className="loading">
           <div className="loading-spinner"></div>
-          <p>Loading audit logs...</p>
+          <p>{t('audit.loading')}</p>
         </div>
       </div>
     )
@@ -171,8 +173,8 @@ const AuditLogs: React.FC = () => {
   return (
     <div className="audit-logs-page">
       <div className="page-header">
-        <h1>Audit Logs</h1>
-        <p>View system activities and track all changes</p>
+        <h1>{t('audit.page_title')}</h1>
+        <p>{t('audit.page_description')}</p>
       </div>
 
       {notification && (
@@ -187,19 +189,19 @@ const AuditLogs: React.FC = () => {
           <div className="stats-grid">
             <div className="stat-card">
               <div className="stat-value">{stats.total_actions}</div>
-              <div className="stat-label">Total Actions (30 days)</div>
+              <div className="stat-label">{t('audit.total_actions_30d')}</div>
             </div>
             <div className="stat-card">
               <div className="stat-value">{stats.unique_users}</div>
-              <div className="stat-label">Active Users</div>
+              <div className="stat-label">{t('audit.active_users')}</div>
             </div>
             <div className="stat-card">
               <div className="stat-value">{formatActionName(stats.most_common_action)}</div>
-              <div className="stat-label">Most Common Action</div>
+              <div className="stat-label">{t('audit.most_common_action')}</div>
             </div>
             <div className="stat-card">
               <div className="stat-value">{formatEntityName(stats.most_active_entity)}</div>
-              <div className="stat-label">Most Active Entity</div>
+              <div className="stat-label">{t('audit.most_active_entity')}</div>
             </div>
           </div>
         </div>
@@ -209,13 +211,13 @@ const AuditLogs: React.FC = () => {
         <div className="search-section">
           <input
             type="text"
-            placeholder="Search by entity, action, or user..."
+            placeholder={t('audit.search_placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
             className="search-input"
           />
-          <button onClick={handleSearch} className="btn-secondary">Search</button>
+          <button onClick={handleSearch} className="btn-secondary">{t('audit.search')}</button>
         </div>
         
         <div className="controls-right">
@@ -223,14 +225,14 @@ const AuditLogs: React.FC = () => {
             onClick={() => setShowFilters(!showFilters)} 
             className={`btn-secondary ${showFilters ? 'active' : ''}`}
           >
-            Filters
+            {t('audit.filters')}
           </button>
           <button 
             onClick={handleExport} 
             className="btn-secondary"
             disabled={exporting}
           >
-            {exporting ? 'Exporting...' : 'Export CSV'}
+            {exporting ? t('audit.exporting') : t('audit.export_csv')}
           </button>
         </div>
       </div>
@@ -239,12 +241,12 @@ const AuditLogs: React.FC = () => {
         <div className="filters-section">
           <div className="filters-grid">
             <div className="filter-group">
-              <label>Action Type</label>
+              <label>{t('audit.action_type')}</label>
               <select
                 value={filters.action_type || ''}
                 onChange={(e) => handleFilterChange('action_type', e.target.value)}
               >
-                <option value="">All Actions</option>
+                <option value="">{t('audit.all_actions')}</option>
                 {actionTypes.map(type => (
                   <option key={type} value={type}>{formatEntityName(type)}</option>
                 ))}
@@ -252,12 +254,12 @@ const AuditLogs: React.FC = () => {
             </div>
 
             <div className="filter-group">
-              <label>Entity</label>
+              <label>{t('audit.entity')}</label>
               <select
                 value={filters.entity || ''}
                 onChange={(e) => handleFilterChange('entity', e.target.value)}
               >
-                <option value="">All Entities</option>
+                <option value="">{t('audit.all_entities')}</option>
                 {entities.map(entity => (
                   <option key={entity} value={entity}>{formatEntityName(entity)}</option>
                 ))}
@@ -265,7 +267,7 @@ const AuditLogs: React.FC = () => {
             </div>
 
             <div className="filter-group">
-              <label>Start Date</label>
+              <label>{t('audit.start_date')}</label>
               <input
                 type="datetime-local"
                 value={filters.start_date || ''}
@@ -274,7 +276,7 @@ const AuditLogs: React.FC = () => {
             </div>
 
             <div className="filter-group">
-              <label>End Date</label>
+              <label>{t('audit.end_date')}</label>
               <input
                 type="datetime-local"
                 value={filters.end_date || ''}
@@ -284,39 +286,39 @@ const AuditLogs: React.FC = () => {
           </div>
           
           <div className="filters-actions">
-            <button onClick={clearFilters} className="btn-secondary">Clear All</button>
+            <button onClick={clearFilters} className="btn-secondary">{t('audit.clear_all')}</button>
           </div>
         </div>
       )}
 
       {error && (
         <div className="error-message">
-          <strong>Error:</strong> {error}
+          <strong>{t('common.error')}:</strong> {error}
         </div>
       )}
 
       <div className="audit-logs-section">
         <div className="section-header">
-          <h2>Activity Log</h2>
+          <h2>{t('audit.activity_log')}</h2>
           <div className="log-count">
-            {auditLogs.length} {auditLogs.length === 1 ? 'entry' : 'entries'}
+            {t('audit.entries_count', { count: auditLogs.length, plural: auditLogs.length === 1 ? t('audit.entry') : t('audit.entries') })}
           </div>
         </div>
         
         {auditLogs.length === 0 ? (
           <div className="no-logs">
-            <p>No audit logs found. Try adjusting your search or filters.</p>
+            <p>{t('audit.no_logs')}</p>
           </div>
         ) : (
           <div className="audit-logs-table-container">
             <table className="audit-logs-table">
               <thead>
                 <tr>
-                  <th>Timestamp</th>
-                  <th>User</th>
-                  <th>Action</th>
-                  <th>Entity</th>
-                  <th>Details</th>
+                  <th>{t('audit.timestamp')}</th>
+                  <th>{t('audit.user')}</th>
+                  <th>{t('audit.action')}</th>
+                  <th>{t('audit.entity')}</th>
+                  <th>{t('audit.details')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -326,7 +328,7 @@ const AuditLogs: React.FC = () => {
                       {formatTimestamp(log.timestamp)}
                     </td>
                     <td className="user-cell">
-                      {log.user_name || 'Unknown'}
+                      {log.user_name || t('audit.unknown_user')}
                     </td>
                     <td className="action-cell">
                       <span className={`action-badge ${getActionTypeColor(log.action_type)}`}>
