@@ -13,7 +13,8 @@
     "actions": "İşlemler",
     "confirm": "Onayla",
     "yes": "Evet",
-    "no": "Hayır"
+    "no": "Hayır",
+    "clear": "Temizle"
   },
   "navigation": {
     "dashboard": "Kontrol Paneli",
@@ -291,6 +292,7 @@
     "page_description": "Gelen sevkiyatları yönetin ve envanteri güncelleyin",
     "loading": "Kabul verileri yükleniyor...",
     "search_placeholder": "Referans veya tedarikçi ile arama yapın...",
+    "search": "Ara",
     "new_receipt": "Yeni Kabul",
     "cancel": "İptal",
     "create_new_receipt": "Yeni Kabul Oluştur",

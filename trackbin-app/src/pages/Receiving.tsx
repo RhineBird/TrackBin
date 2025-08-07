@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { receivingService, type ReceiptWithDetails, type CreateReceiptRequest, type BinWithLocation } from '../services/receivingService'
 import { itemsService } from '../services/itemsService'
+import { useI18n } from '../i18n/hooks'
 import type { Item } from '../types/database'
 import './Receiving.css'
 
@@ -19,6 +20,7 @@ interface ReceiptFormData {
 }
 
 const Receiving: React.FC = () => {
+  const { t } = useI18n()
   const [receipts, setReceipts] = useState<ReceiptWithDetails[]>([])
   const [items, setItems] = useState<Item[]>([])
   const [bins, setBins] = useState<BinWithLocation[]>([])
@@ -236,8 +238,8 @@ const Receiving: React.FC = () => {
   return (
     <div className="receiving-page">
       <div className="page-header">
-        <h1>Receiving</h1>
-        <p>Manage incoming shipments and update inventory</p>
+        <h1>{t('receiving.page_title')}</h1>
+        <p>{t('receiving.page_description')}</p>
       </div>
 
       {notification && (
@@ -251,15 +253,15 @@ const Receiving: React.FC = () => {
         <div className="search-section">
           <input
             type="text"
-            placeholder="Search receipts by reference or supplier..."
+            placeholder={t('receiving.search_placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
             className="search-input"
           />
-          <button onClick={handleSearch} className="btn-secondary">Search</button>
+          <button onClick={handleSearch} className="btn-secondary">{t('receiving.search')}</button>
           {searchQuery && (
-            <button onClick={() => { setSearchQuery(''); loadData(); }} className="btn-secondary">Clear</button>
+            <button onClick={() => { setSearchQuery(''); loadData(); }} className="btn-secondary">{t('common.clear')}</button>
           )}
         </div>
         
@@ -292,7 +294,7 @@ const Receiving: React.FC = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, reference_code: e.target.value }))}
                   className={formErrors.reference_code ? 'error' : ''}
                   disabled={submitting}
-                  placeholder="PO-2025-001"
+                  placeholder={t('receiving.reference_placeholder')}
                 />
                 {formErrors.reference_code && <span className="field-error">{formErrors.reference_code}</span>}
               </div>
@@ -306,7 +308,7 @@ const Receiving: React.FC = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, supplier: e.target.value }))}
                   className={formErrors.supplier ? 'error' : ''}
                   disabled={submitting}
-                  placeholder="Supplier Name"
+                  placeholder={t('receiving.supplier_placeholder')}
                 />
                 {formErrors.supplier && <span className="field-error">{formErrors.supplier}</span>}
               </div>
@@ -314,7 +316,7 @@ const Receiving: React.FC = () => {
 
             <div className="receipt-lines-section">
               <div className="section-header">
-                <h3>Items</h3>
+                <h3>{t('receiving.items')}</h3>
                 <button type="button" onClick={addReceiptLine} className="btn-secondary">Add Item</button>
               </div>
               
@@ -330,7 +332,7 @@ const Receiving: React.FC = () => {
                       className={formErrors[`line_${line.id}_item_id`] ? 'error' : ''}
                       disabled={submitting}
                     >
-                      <option value="">Select an item</option>
+                      <option value="">{t('receiving.select_item')}</option>
                       {items.map(item => (
                         <option key={item.id} value={item.id}>
                           {item.sku} - {item.name}
@@ -374,7 +376,7 @@ const Receiving: React.FC = () => {
                       className={formErrors[`line_${line.id}_bin_id`] ? 'error' : ''}
                       disabled={submitting}
                     >
-                      <option value="">Select a bin</option>
+                      <option value="">{t('receiving.select_bin')}</option>
                       {bins.map(bin => (
                         <option key={bin.id} value={bin.id}>
                           {bin.name} - {bin.zone_name} ({bin.warehouse_name})
@@ -429,13 +431,13 @@ const Receiving: React.FC = () => {
             <table className="receipts-table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Reference</th>
-                  <th>Supplier</th>
-                  <th>Items</th>
-                  <th>Expected</th>
-                  <th>Received</th>
-                  <th>Variance</th>
+                  <th>{t('receiving.date')}</th>
+                  <th>{t('receiving.reference')}</th>
+                  <th>{t('receiving.supplier')}</th>
+                  <th>{t('receiving.items')}</th>
+                  <th>{t('receiving.expected')}</th>
+                  <th>{t('receiving.received')}</th>
+                  <th>{t('receiving.variance')}</th>
                 </tr>
               </thead>
               <tbody>

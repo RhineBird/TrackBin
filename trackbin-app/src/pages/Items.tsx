@@ -105,7 +105,7 @@ const Items: React.FC<ItemsProps> = ({ user }) => {
   }
 
   const handleDeleteItem = async (item: ItemWithStock) => {
-    if (!confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`)) {
+    if (!confirm(t('items.delete_confirm', { name: item.name }))) {
       return
     }
 
@@ -248,7 +248,7 @@ const Items: React.FC<ItemsProps> = ({ user }) => {
                     <button 
                       className="btn-edit"
                       onClick={() => handleEditItem(item)}
-                      title="Edit item"
+                      title={t('items.edit_item')}
                     >
                       ✏️
                     </button>
@@ -256,7 +256,7 @@ const Items: React.FC<ItemsProps> = ({ user }) => {
                       <button 
                         className="btn-delete"
                         onClick={() => handleDeleteItem(item)}
-                        title="Delete item (Admin only)"
+                        title={t('items.delete_item')}
                       >
                         🗑️
                       </button>
