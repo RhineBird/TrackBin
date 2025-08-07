@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { authService } from '../services/authService'
+import { useI18n } from '../i18n/hooks'
 import type { User, Role } from '../types/database'
 import './SignIn.css'
 
@@ -8,6 +9,7 @@ interface SignInProps {
 }
 
 const SignIn: React.FC<SignInProps> = ({ onSignIn }) => {
+  const { t } = useI18n()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [logoError, setLogoError] = useState(false)
@@ -22,15 +24,15 @@ const SignIn: React.FC<SignInProps> = ({ onSignIn }) => {
     const errors: { email?: string; password?: string } = {}
     
     if (!email.trim()) {
-      errors.email = 'Email is required'
+      errors.email = t('auth.email_required')
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errors.email = 'Please enter a valid email address'
+      errors.email = t('auth.invalid_email')
     }
     
     if (!password.trim()) {
-      errors.password = 'Password is required'
+      errors.password = t('auth.password_required')
     } else if (password.length < 6) {
-      errors.password = 'Password must be at least 6 characters'
+      errors.password = t('auth.password_min_length')
     }
     
     setValidationErrors(errors)
@@ -52,7 +54,7 @@ const SignIn: React.FC<SignInProps> = ({ onSignIn }) => {
       authService.saveSession(response.user, response.session)
       onSignIn(response.user)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed')
+      setError(err instanceof Error ? err.message : t('auth.login_failed'))
     } finally {
       setIsLoading(false)
     }
@@ -77,7 +79,7 @@ const SignIn: React.FC<SignInProps> = ({ onSignIn }) => {
             ) : (
               <div className="logo-fallback">
                 <h1>TrackBin</h1>
-                <p>Warehouse Management System</p>
+                <p>{t('auth.warehouse_management')}</p>
               </div>
             )}
           </div>
@@ -91,7 +93,7 @@ const SignIn: React.FC<SignInProps> = ({ onSignIn }) => {
             
             <div className="form-group">
               <label htmlFor="email" className="form-label">
-                Email
+                {t('auth.email')}
               </label>
               <input
                 type="email"
@@ -104,7 +106,7 @@ const SignIn: React.FC<SignInProps> = ({ onSignIn }) => {
                   }
                 }}
                 className={`form-input ${validationErrors.email ? 'form-input-error' : ''}`}
-                placeholder="Enter your email"
+                placeholder={t('auth.email_placeholder')}
                 disabled={isLoading}
               />
               {validationErrors.email && (
@@ -116,7 +118,7 @@ const SignIn: React.FC<SignInProps> = ({ onSignIn }) => {
 
             <div className="form-group">
               <label htmlFor="password" className="form-label">
-                Password
+                {t('auth.password')}
               </label>
               <input
                 type="password"
@@ -129,7 +131,7 @@ const SignIn: React.FC<SignInProps> = ({ onSignIn }) => {
                   }
                 }}
                 className={`form-input ${validationErrors.password ? 'form-input-error' : ''}`}
-                placeholder="Enter your password"
+                placeholder={t('auth.password_placeholder')}
                 disabled={isLoading}
               />
               {validationErrors.password && (
@@ -144,7 +146,7 @@ const SignIn: React.FC<SignInProps> = ({ onSignIn }) => {
               className="signin-button"
               disabled={isLoading}
             >
-              {isLoading ? 'Signing In...' : 'Sign In'}
+              {isLoading ? t('auth.signing_in') : t('auth.sign_in')}
             </button>
           </form>
         </div>

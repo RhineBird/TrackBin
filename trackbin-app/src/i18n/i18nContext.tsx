@@ -7,7 +7,7 @@ type Language = 'en' | 'tr'
 interface I18nContextType {
   language: Language
   setLanguage: (lang: Language) => void
-  t: (key: string) => string
+  t: (key: string, variables?: Record<string, string | number>) => string
 }
 
 const translations = {
@@ -32,7 +32,7 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
     document.documentElement.lang = language
   }, [language])
 
-  const t = (key: string): string => {
+  const t = (key: string, variables?: Record<string, string | number>): string => {
     const keys = key.split('.')
     let value: unknown = translations[language]
     
@@ -40,7 +40,16 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value = (value as Record<string, unknown>)?.[k]
     }
     
-    return (typeof value === 'string' ? value : key) // Return key if translation not found
+    let result = (typeof value === 'string' ? value : key) // Return key if translation not found
+    
+    // Replace variables in the translation
+    if (variables && typeof result === 'string') {
+      Object.entries(variables).forEach(([varKey, varValue]) => {
+        result = result.replace(new RegExp(`\\{${varKey}\\}`, 'g'), String(varValue))
+      })
+    }
+    
+    return result
   }
 
   return (

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { stockMovementService, type StockMovementWithDetails, type ItemStockLocation, type BinWithLocation } from '../services/stockMovementService'
 import { itemsService } from '../services/itemsService'
 import StatusChangeModal from '../components/StatusChangeModal'
+import { useI18n } from '../i18n/hooks'
 import type { Item } from '../types/database'
 import './StockMovement.css'
 
@@ -14,6 +15,7 @@ interface MovementFormData {
 }
 
 const StockMovement: React.FC = () => {
+  const { t } = useI18n()
   const [movements, setMovements] = useState<StockMovementWithDetails[]>([])
   const [items, setItems] = useState<Item[]>([])
   const [bins, setBins] = useState<BinWithLocation[]>([])
@@ -58,7 +60,7 @@ const StockMovement: React.FC = () => {
       setItems(itemsData)
       setBins(binsData)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data')
+      setError(err instanceof Error ? err.message : t('stock_movement.load_failed'))
     } finally {
       setLoading(false)
     }
@@ -116,27 +118,27 @@ const StockMovement: React.FC = () => {
     const errors: Partial<MovementFormData> = {}
 
     if (!formData.item_id) {
-      errors.item_id = 'Item is required'
+      errors.item_id = t('stock_movement.item_required')
     }
 
     if (!formData.from_bin_id) {
-      errors.from_bin_id = 'Source bin is required'
+      errors.from_bin_id = t('stock_movement.source_bin_required')
     }
 
     if (!formData.to_bin_id) {
-      errors.to_bin_id = 'Destination bin is required'
+      errors.to_bin_id = t('stock_movement.destination_bin_required')
     }
 
     if (formData.from_bin_id === formData.to_bin_id) {
-      errors.to_bin_id = 'Destination must be different from source'
+      errors.to_bin_id = t('stock_movement.destination_different')
     }
 
     if (!formData.quantity || Number(formData.quantity) <= 0) {
-      errors.quantity = 'Quantity must be greater than 0'
+      errors.quantity = t('stock_movement.quantity_required')
     }
 
     if (!formData.reason.trim()) {
-      errors.reason = 'Reason is required'
+      errors.reason = t('stock_movement.reason_required')
     }
 
     setFormErrors(errors)
@@ -159,7 +161,7 @@ const StockMovement: React.FC = () => {
         quantity: Number(formData.quantity)
       })
       
-      showNotification('success', 'Stock moved successfully')
+      showNotification('success', t('stock_movement.stock_moved'))
       
       // Reset form
       setFormData({
@@ -174,7 +176,7 @@ const StockMovement: React.FC = () => {
       // Reload data
       loadData()
     } catch (err) {
-      showNotification('error', err instanceof Error ? err.message : 'Failed to move stock')
+      showNotification('error', err instanceof Error ? err.message : t('stock_movement.move_failed'))
     } finally {
       setSubmitting(false)
     }
@@ -199,7 +201,7 @@ const StockMovement: React.FC = () => {
   }
 
   const handleStatusChanged = () => {
-    showNotification('success', 'Stock status updated successfully')
+    showNotification('success', t('stock_movement.status_updated'))
     // Reload the item stock locations
     if (formData.item_id) {
       loadItemStockLocations(formData.item_id)
@@ -226,7 +228,7 @@ const StockMovement: React.FC = () => {
       <div className="stock-movement-page">
         <div className="loading">
           <div className="loading-spinner"></div>
-          <p>Loading stock movement data...</p>
+          <p>{t('stock_movement.loading')}</p>
         </div>
       </div>
     )
@@ -235,8 +237,8 @@ const StockMovement: React.FC = () => {
   return (
     <div className="stock-movement-page">
       <div className="page-header">
-        <h1>Stock Movement</h1>
-        <p>Transfer stock between bins and locations</p>
+        <h1>{t('stock_movement.page_title')}</h1>
+        <p>{t('stock_movement.page_description')}</p>
       </div>
 
       {notification && (
@@ -248,17 +250,17 @@ const StockMovement: React.FC = () => {
 
       <div className="movement-content">
         <div className="movement-form-section">
-          <h2>Move Stock</h2>
+          <h2>{t('stock_movement.move_stock')}</h2>
           
           {error && (
             <div className="error-message">
-              <strong>Error:</strong> {error}
+              <strong>{t('common.error')}:</strong> {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="movement-form">
             <div className="form-group">
-              <label htmlFor="item_id">Item *</label>
+              <label htmlFor="item_id">{t('stock_movement.item')} *</label>
               <select
                 id="item_id"
                 name="item_id"
@@ -267,7 +269,7 @@ const StockMovement: React.FC = () => {
                 className={formErrors.item_id ? 'error' : ''}
                 disabled={submitting}
               >
-                <option value="">Select an item</option>
+                <option value="">{t('stock_movement.select_item')}</option>
                 {items.map(item => (
                   <option key={item.id} value={item.id}>
                     {item.sku} - {item.name}
@@ -279,7 +281,7 @@ const StockMovement: React.FC = () => {
 
             {itemStockLocations.length > 0 && (
               <div className="stock-locations">
-                <h3>Current Stock Locations</h3>
+                <h3>{t('stock_movement.current_locations')}</h3>
                 <div className="locations-grid">
                   {itemStockLocations.map(location => (
                     <div key={location.bin_id} className="location-card">
@@ -299,9 +301,9 @@ const StockMovement: React.FC = () => {
                             type="button"
                             className="btn-status-change"
                             onClick={() => handleStatusChange(location)}
-                            title="Change Status"
+                            title={t('stock_movement.change_status')}
                           >
-                            Change Status
+                            {t('stock_movement.change_status')}
                           </button>
                         </div>
                       </div>
@@ -312,7 +314,7 @@ const StockMovement: React.FC = () => {
             )}
 
             <div className="form-group">
-              <label htmlFor="from_bin_id">Source Bin *</label>
+              <label htmlFor="from_bin_id">{t('stock_movement.source_bin')} *</label>
               <select
                 id="from_bin_id"
                 name="from_bin_id"
@@ -321,10 +323,10 @@ const StockMovement: React.FC = () => {
                 className={formErrors.from_bin_id ? 'error' : ''}
                 disabled={submitting || !formData.item_id}
               >
-                <option value="">Select source bin</option>
+                <option value="">{t('stock_movement.select_source_bin')}</option>
                 {getSourceBinOptions().map(location => (
                   <option key={location.bin_id} value={location.bin_id}>
-                    {location.bin_name} - {location.zone_name} ({location.quantity} available)
+                    {location.bin_name} - {location.zone_name} ({t('stock_movement.available_quantity', { quantity: location.quantity })})
                   </option>
                 ))}
               </select>
@@ -332,7 +334,7 @@ const StockMovement: React.FC = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="to_bin_id">Destination Bin *</label>
+              <label htmlFor="to_bin_id">{t('stock_movement.destination_bin')} *</label>
               <select
                 id="to_bin_id"
                 name="to_bin_id"
@@ -341,7 +343,7 @@ const StockMovement: React.FC = () => {
                 className={formErrors.to_bin_id ? 'error' : ''}
                 disabled={submitting}
               >
-                <option value="">Select destination bin</option>
+                <option value="">{t('stock_movement.select_destination_bin')}</option>
                 {bins.map(bin => (
                   <option key={bin.id} value={bin.id}>
                     {bin.name} - {bin.zone_name} ({bin.warehouse_name})
@@ -352,7 +354,7 @@ const StockMovement: React.FC = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="quantity">Quantity *</label>
+              <label htmlFor="quantity">{t('stock_movement.quantity')} *</label>
               <input
                 type="number"
                 id="quantity"
@@ -366,14 +368,14 @@ const StockMovement: React.FC = () => {
               />
               {formData.from_bin_id && (
                 <div className="quantity-info">
-                  Available: {getAvailableQuantity(formData.from_bin_id)} units
+                  {t('stock_movement.available_units', { quantity: getAvailableQuantity(formData.from_bin_id) })}
                 </div>
               )}
               {formErrors.quantity && <span className="field-error">{formErrors.quantity}</span>}
             </div>
 
             <div className="form-group">
-              <label htmlFor="reason">Reason for Movement *</label>
+              <label htmlFor="reason">{t('stock_movement.reason')} *</label>
               <textarea
                 id="reason"
                 name="reason"
@@ -382,7 +384,7 @@ const StockMovement: React.FC = () => {
                 className={formErrors.reason ? 'error' : ''}
                 disabled={submitting}
                 rows={3}
-                placeholder="e.g., Relocating to optimize space, Moving to picking area"
+                placeholder={t('stock_movement.reason_placeholder')}
               />
               {formErrors.reason && <span className="field-error">{formErrors.reason}</span>}
             </div>
@@ -392,30 +394,30 @@ const StockMovement: React.FC = () => {
               className="btn-primary"
               disabled={submitting}
             >
-              {submitting ? 'Moving Stock...' : 'Move Stock'}
+              {submitting ? t('stock_movement.moving_stock') : t('stock_movement.move_stock')}
             </button>
           </form>
         </div>
 
         <div className="movement-history-section">
-          <h2>Recent Movements</h2>
+          <h2>{t('stock_movement.recent_movements')}</h2>
           
           {movements.length === 0 ? (
             <div className="no-movements">
-              <p>No stock movements recorded yet.</p>
+              <p>{t('stock_movement.no_movements')}</p>
             </div>
           ) : (
             <div className="movements-table-container">
               <table className="movements-table">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Item</th>
-                    <th>From</th>
-                    <th>To</th>
-                    <th>Quantity</th>
-                    <th>Reason</th>
-                    <th>User</th>
+                    <th>{t('stock_movement.date')}</th>
+                    <th>{t('stock_movement.item')}</th>
+                    <th>{t('stock_movement.from')}</th>
+                    <th>{t('stock_movement.to')}</th>
+                    <th>{t('stock_movement.quantity')}</th>
+                    <th>{t('stock_movement.reason')}</th>
+                    <th>{t('stock_movement.user')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -428,11 +430,11 @@ const StockMovement: React.FC = () => {
                           <span className="item-name">{movement.item?.name}</span>
                         </div>
                       </td>
-                      <td>{movement.from_bin?.name || 'Unknown'}</td>
-                      <td>{movement.to_bin?.name || 'Unknown'}</td>
+                      <td>{movement.from_bin?.name || t('stock_movement.unknown')}</td>
+                      <td>{movement.to_bin?.name || t('stock_movement.unknown')}</td>
                       <td className="quantity-cell">{movement.quantity}</td>
                       <td className="reason-cell">{movement.reason}</td>
-                      <td>{movement.user_name || 'Unknown'}</td>
+                      <td>{movement.user_name || t('stock_movement.unknown')}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { userService, type UserWithRole, type CreateUserRequest, type UpdateUserRequest } from '../services/userService'
 import type { Role } from '../types/database'
 import UserModal from '../components/UserModal'
+import { useI18n } from '../i18n/hooks'
 import './Users.css'
 
 const Users: React.FC = () => {
+  const { t } = useI18n()
   const [users, setUsers] = useState<UserWithRole[]>([])
   const [roles, setRoles] = useState<Role[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,7 +31,7 @@ const Users: React.FC = () => {
       setUsers(usersData)
       setRoles(rolesData)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data')
+      setError(err instanceof Error ? err.message : t('users.load_failed'))
     } finally {
       setLoading(false)
     }
@@ -52,7 +54,7 @@ const Users: React.FC = () => {
       const data = await userService.searchUsers(query)
       setUsers(data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to search users')
+      setError(err instanceof Error ? err.message : t('users.search_failed'))
     } finally {
       setLoading(false)
     }
@@ -71,16 +73,16 @@ const Users: React.FC = () => {
   }
 
   const handleDeleteUser = async (user: UserWithRole) => {
-    if (!confirm(`Are you sure you want to deactivate user "${user.name}"?`)) {
+    if (!confirm(t('users.delete_confirm', { name: user.name }))) {
       return
     }
 
     try {
       await userService.deleteUser(user.id)
-      showNotification('success', 'User deactivated successfully')
+      showNotification('success', t('users.user_deactivated'))
       loadData()
     } catch (err) {
-      showNotification('error', err instanceof Error ? err.message : 'Failed to deactivate user')
+      showNotification('error', err instanceof Error ? err.message : t('users.user_deactivate_failed'))
     }
   }
 
@@ -88,17 +90,17 @@ const Users: React.FC = () => {
     try {
       if (modalMode === 'create') {
         await userService.createUser(userData as CreateUserRequest)
-        showNotification('success', 'User created successfully')
+        showNotification('success', t('users.user_created'))
       } else {
         await userService.updateUser(selectedUser!.id, userData as UpdateUserRequest)
-        showNotification('success', 'User updated successfully')
+        showNotification('success', t('users.user_updated'))
       }
       
       setModalOpen(false)
       setSelectedUser(null)
       loadData()
     } catch (err) {
-      showNotification('error', err instanceof Error ? err.message : 'Failed to save user')
+      showNotification('error', err instanceof Error ? err.message : t('users.user_create_failed'))
     }
   }
 
@@ -125,7 +127,7 @@ const Users: React.FC = () => {
       <div className="users-page">
         <div className="loading">
           <div className="loading-spinner"></div>
-          <p>Loading users...</p>
+          <p>{t('users.loading')}</p>
         </div>
       </div>
     )
@@ -134,8 +136,8 @@ const Users: React.FC = () => {
   return (
     <div className="users-page">
       <div className="page-header">
-        <h1>User Management</h1>
-        <p>Manage user accounts, roles, and permissions</p>
+        <h1>{t('users.page_title')}</h1>
+        <p>{t('users.page_description')}</p>
       </div>
 
       {notification && (
@@ -150,13 +152,13 @@ const Users: React.FC = () => {
           className={`tab-button ${currentView === 'users' ? 'active' : ''}`}
           onClick={() => setCurrentView('users')}
         >
-          Users
+          {t('users.users_tab')}
         </button>
         <button 
           className={`tab-button ${currentView === 'roles' ? 'active' : ''}`}
           onClick={() => setCurrentView('roles')}
         >
-          Roles & Permissions
+          {t('users.roles_tab')}
         </button>
       </div>
 
@@ -166,7 +168,7 @@ const Users: React.FC = () => {
             <div className="search-box">
               <input
                 type="text"
-                placeholder="Search users by name, email, or role..."
+                placeholder={t('users.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="search-input"
@@ -174,19 +176,19 @@ const Users: React.FC = () => {
             </div>
             <div className="controls-actions">
               <button className="btn-success" onClick={handleAddUser}>
-                + Add User
+                + {t('users.add_user')}
               </button>
               <button className="btn-primary" onClick={loadData}>
-                Refresh
+                {t('users.refresh')}
               </button>
             </div>
           </div>
 
           {error && (
             <div className="error-message">
-              <strong>Error:</strong> {error}
+              <strong>{t('common.error')}:</strong> {error}
               <button onClick={loadData} className="retry-btn">
-                Try Again
+                {t('users.try_again')}
               </button>
             </div>
           )}
@@ -195,20 +197,20 @@ const Users: React.FC = () => {
             <table className="users-table">
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Last Login</th>
-                  <th>Created</th>
-                  <th>Actions</th>
+                  <th>{t('users.name')}</th>
+                  <th>{t('users.email')}</th>
+                  <th>{t('users.role')}</th>
+                  <th>{t('users.status')}</th>
+                  <th>{t('users.last_login')}</th>
+                  <th>{t('users.created')}</th>
+                  <th>{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {getFilteredUsers().length === 0 ? (
                   <tr>
                     <td colSpan={7} className="no-data">
-                      {searchQuery ? 'No users found matching your search.' : 'No users found.'}
+                      {searchQuery ? t('users.no_search_results') : t('users.no_users')}
                     </td>
                   </tr>
                 ) : (
@@ -217,7 +219,7 @@ const Users: React.FC = () => {
                       <td>
                         <div className="user-info">
                           <strong>{user.name}</strong>
-                          {user.created_by && <span className="created-by">Created by admin</span>}
+                          {user.created_by && <span className="created-by">{t('users.created_by_admin')}</span>}
                         </div>
                       </td>
                       <td>{user.email}</td>
@@ -228,25 +230,25 @@ const Users: React.FC = () => {
                       </td>
                       <td>
                         <span className={`status-badge ${user.is_active ? 'active' : 'inactive'}`}>
-                          {user.is_active ? 'Active' : 'Inactive'}
+                          {user.is_active ? t('users.active') : t('users.inactive')}
                         </span>
                       </td>
                       <td>
-                        {user.last_login ? formatTimestamp(user.last_login) : 'Never'}
+                        {user.last_login ? formatTimestamp(user.last_login) : t('users.never')}
                       </td>
                       <td>{formatTimestamp(user.created_at)}</td>
                       <td className="actions-cell">
                         <button 
                           className="btn-edit"
                           onClick={() => handleEditUser(user)}
-                          title="Edit user"
+                          title={t('users.edit_user')}
                         >
                           ✏️
                         </button>
                         <button 
                           className="btn-delete"
                           onClick={() => handleDeleteUser(user)}
-                          title="Deactivate user"
+                          title={t('users.deactivate_user')}
                           disabled={!user.is_active}
                         >
                           🚫
@@ -261,8 +263,12 @@ const Users: React.FC = () => {
 
           <div className="users-summary">
             <p>
-              Showing {getFilteredUsers().length} of {users.length} user{users.length !== 1 ? 's' : ''}
-              {searchQuery && ` matching "${searchQuery}"`}
+              {t('users.showing_count', { 
+                count: getFilteredUsers().length, 
+                total: users.length, 
+                plural: users.length !== 1 ? 's' : '' 
+              })}
+              {searchQuery && ` ${t('users.matching_search', { query: searchQuery })}`}
             </p>
           </div>
         </>
@@ -271,19 +277,19 @@ const Users: React.FC = () => {
       {currentView === 'roles' && (
         <div className="roles-section">
           <div className="roles-header">
-            <h2>Roles & Permissions</h2>
-            <button className="btn-success">+ Add Role</button>
+            <h2>{t('users.roles_tab')}</h2>
+            <button className="btn-success">+ {t('users.add_role')}</button>
           </div>
           
           <div className="roles-table-container">
             <table className="roles-table">
               <thead>
                 <tr>
-                  <th>Role Name</th>
-                  <th>Description</th>
-                  <th>Type</th>
-                  <th>Users</th>
-                  <th>Actions</th>
+                  <th>{t('users.role_name')}</th>
+                  <th>{t('users.description')}</th>
+                  <th>{t('users.type')}</th>
+                  <th>{t('users.users_count')}</th>
+                  <th>{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -295,21 +301,21 @@ const Users: React.FC = () => {
                     <td>{role.description}</td>
                     <td>
                       <span className={`role-type-badge ${role.is_system_role ? 'system' : 'custom'}`}>
-                        {role.is_system_role ? 'System' : 'Custom'}
+                        {role.is_system_role ? t('users.system') : t('users.custom')}
                       </span>
                     </td>
                     <td>
                       {users.filter(u => u.role_id === role.id).length}
                     </td>
                     <td className="actions-cell">
-                      <button className="btn-edit" title="Edit role">
+                      <button className="btn-edit" title={t('users.edit_role')}>
                         ✏️
                       </button>
-                      <button className="btn-permissions" title="Manage permissions">
+                      <button className="btn-permissions" title={t('users.manage_permissions')}>
                         🔑
                       </button>
                       {!role.is_system_role && (
-                        <button className="btn-delete" title="Delete role">
+                        <button className="btn-delete" title={t('users.delete_role')}>
                           🗑️
                         </button>
                       )}
