@@ -41,10 +41,10 @@ export const stockMovementService = {
       .from('stock_movements')
       .select(`
         *,
-        items!inner(id, sku, name),
+        items(id, sku, name),
         from_bins:from_bin_id(id, name),
         to_bins:to_bin_id(id, name),
-        users!inner(name)
+        users(name)
       `)
       .order('created_at', { ascending: false })
 
@@ -216,10 +216,10 @@ export const stockMovementService = {
       .from('stock_movements')
       .select(`
         *,
-        items!inner(id, sku, name),
+        items(id, sku, name),
         from_bins:from_bin_id(id, name),
         to_bins:to_bin_id(id, name),
-        users!inner(name)
+        users(name)
       `)
       .or(`items.sku.ilike.%${query}%,items.name.ilike.%${query}%,reason.ilike.%${query}%`)
       .order('created_at', { ascending: false })

@@ -402,11 +402,22 @@ const StockMovement: React.FC = () => {
         <div className="movement-history-section">
           <h2>{t('stock_movement.recent_movements')}</h2>
           
-          {movements.length === 0 ? (
+          {error && (
+            <div className="error-message" style={{ marginBottom: '1rem' }}>
+              <strong>{t('common.error')}:</strong> {error}
+            </div>
+          )}
+          
+          {movements.length === 0 && !loading ? (
             <div className="no-movements">
               <p>{t('stock_movement.no_movements')}</p>
+              {!error && (
+                <p style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.5rem' }}>
+                  If you just performed a stock movement, try refreshing the page.
+                </p>
+              )}
             </div>
-          ) : (
+          ) : movements.length > 0 ? (
             <div className="movements-table-container">
               <table className="movements-table">
                 <thead>
@@ -426,8 +437,8 @@ const StockMovement: React.FC = () => {
                       <td>{formatTimestamp(movement.created_at)}</td>
                       <td>
                         <div className="item-info">
-                          <code className="sku">{movement.item?.sku}</code>
-                          <span className="item-name">{movement.item?.name}</span>
+                          <code className="sku">{movement.item?.sku || t('stock_movement.unknown')}</code>
+                          <span className="item-name">{movement.item?.name || t('stock_movement.unknown')}</span>
                         </div>
                       </td>
                       <td>{movement.from_bin?.name || t('stock_movement.unknown')}</td>
@@ -440,7 +451,7 @@ const StockMovement: React.FC = () => {
                 </tbody>
               </table>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 
