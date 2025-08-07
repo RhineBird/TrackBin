@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import type { Item, Bin } from '../types/database'
+import { auditService } from './auditService'
 
 export interface Shipment {
   id: string
@@ -66,7 +67,6 @@ export const shipmentsService = {
       .from('shipments')
       .select(`
         *,
-        users!inner(name),
         shipment_lines(
           id,
           quantity
@@ -86,10 +86,8 @@ export const shipmentsService = {
 
     return (data || []).map(shipment => ({
       ...shipment,
-      user_name: shipment.users?.name,
       total_items: shipment.shipment_lines?.length || 0,
       total_quantity: shipment.shipment_lines?.reduce((sum, line) => sum + line.quantity, 0) || 0,
-      users: undefined
     }))
   },
 
@@ -99,7 +97,6 @@ export const shipmentsService = {
       .from('shipments')
       .select(`
         *,
-        users!inner(name),
         shipment_lines(
           *,
           items!inner(id, sku, name, unit),
@@ -137,7 +134,6 @@ export const shipmentsService = {
         items: undefined,
         bins: undefined
       })),
-      users: undefined
     }
 
     shipment.total_items = shipment.shipment_lines?.length || 0
@@ -302,6 +298,19 @@ export const shipmentsService = {
       await this.reduceStockLevel(line.item_id, line.bin_id, line.quantity)
     }
 
+    // Log audit entry
+    await auditService.createAuditLog(
+      'system',
+      'create',
+      'shipments',
+      shipmentId,
+      { 
+        reference_code: request.reference_code, 
+        customer: request.customer,
+        total_items: request.shipment_lines.length
+      }
+    )
+
     return shipment
   },
 
@@ -336,6 +345,20 @@ export const shipmentsService = {
       if (deleteError) {
         throw new Error(`Failed to remove empty stock entry: ${deleteError.message}`)
       }
+      
+      // Log stock depletion audit entry
+      await auditService.createAuditLog(
+        'system',
+        'delete',
+        'stock_entries',
+        existingStock.id,
+        { 
+          previous_quantity: existingStock.quantity,
+          quantity_shipped: quantityToReduce,
+          operation: 'shipment',
+          result: 'stock_depleted'
+        }
+      )
     } else {
       // Update the stock entry with new quantity
       const { error: updateError } = await supabase
@@ -349,6 +372,20 @@ export const shipmentsService = {
       if (updateError) {
         throw new Error(`Failed to update stock: ${updateError.message}`)
       }
+      
+      // Log stock reduction audit entry
+      await auditService.createAuditLog(
+        'system',
+        'update',
+        'stock_entries',
+        existingStock.id,
+        { 
+          previous_quantity: existingStock.quantity,
+          new_quantity: newQuantity,
+          quantity_shipped: quantityToReduce,
+          operation: 'shipment'
+        }
+      )
     }
   },
 
@@ -358,7 +395,6 @@ export const shipmentsService = {
       .from('shipments')
       .select(`
         *,
-        users!inner(name),
         shipment_lines(
           id,
           quantity
@@ -379,10 +415,8 @@ export const shipmentsService = {
 
     return (data || []).map(shipment => ({
       ...shipment,
-      user_name: shipment.users?.name,
       total_items: shipment.shipment_lines?.length || 0,
       total_quantity: shipment.shipment_lines?.reduce((sum, line) => sum + line.quantity, 0) || 0,
-      users: undefined
     }))
   },
 

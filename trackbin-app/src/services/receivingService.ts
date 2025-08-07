@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import type { Item, Bin } from '../types/database'
+import { auditService } from './auditService'
 
 export interface Receipt {
   id: string
@@ -59,7 +60,6 @@ export const receivingService = {
       .from('receipts')
       .select(`
         *,
-        users!inner(name),
         receipt_lines(
           id,
           quantity_expected,
@@ -80,11 +80,9 @@ export const receivingService = {
 
     return (data || []).map(receipt => ({
       ...receipt,
-      user_name: receipt.users?.name,
       total_items: receipt.receipt_lines?.length || 0,
       total_expected: receipt.receipt_lines?.reduce((sum, line) => sum + line.quantity_expected, 0) || 0,
       total_received: receipt.receipt_lines?.reduce((sum, line) => sum + line.quantity_received, 0) || 0,
-      users: undefined
     }))
   },
 
@@ -94,7 +92,6 @@ export const receivingService = {
       .from('receipts')
       .select(`
         *,
-        users!inner(name),
         receipt_lines(
           *,
           items!inner(id, sku, name, unit),
@@ -136,7 +133,6 @@ export const receivingService = {
         items: undefined,
         bins: undefined
       })),
-      users: undefined
     }
 
     receipt.total_items = receipt.receipt_lines?.length || 0
@@ -243,6 +239,19 @@ export const receivingService = {
       }
     }
 
+    // Log audit entry
+    await auditService.createAuditLog(
+      'system',
+      'create',
+      'receipts',
+      receiptId,
+      { 
+        reference_code: request.reference_code, 
+        supplier: request.supplier,
+        total_items: request.receipt_lines.length
+      }
+    )
+
     return receipt
   },
 
@@ -274,6 +283,20 @@ export const receivingService = {
       if (updateError) {
         throw new Error(`Failed to update stock: ${updateError.message}`)
       }
+      
+      // Log stock movement audit entry
+      await auditService.createAuditLog(
+        'system',
+        'update',
+        'stock_entries',
+        existingStock.id,
+        { 
+          previous_quantity: existingStock.quantity,
+          new_quantity: existingStock.quantity + quantityToAdd,
+          quantity_added: quantityToAdd,
+          operation: 'receipt'
+        }
+      )
     } else {
       // Create new stock entry
       const { error: insertError } = await supabase
@@ -288,6 +311,18 @@ export const receivingService = {
       if (insertError) {
         throw new Error(`Failed to create stock entry: ${insertError.message}`)
       }
+      
+      // Log new stock entry audit
+      await auditService.createAuditLog(
+        'system',
+        'create',
+        'stock_entries',
+        'new-stock-entry',
+        { 
+          initial_quantity: quantityToAdd,
+          operation: 'receipt'
+        }
+      )
     }
   },
 
@@ -331,7 +366,6 @@ export const receivingService = {
       .from('receipts')
       .select(`
         *,
-        users!inner(name),
         receipt_lines(
           id,
           quantity_expected,
@@ -353,11 +387,9 @@ export const receivingService = {
 
     return (data || []).map(receipt => ({
       ...receipt,
-      user_name: receipt.users?.name,
       total_items: receipt.receipt_lines?.length || 0,
       total_expected: receipt.receipt_lines?.reduce((sum, line) => sum + line.quantity_expected, 0) || 0,
       total_received: receipt.receipt_lines?.reduce((sum, line) => sum + line.quantity_received, 0) || 0,
-      users: undefined
     }))
   },
 

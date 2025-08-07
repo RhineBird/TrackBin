@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import { itemsService, type ItemWithStock } from '../services/itemsService'
 import ItemModal from '../components/ItemModal/ItemModal'
-import type { Item } from '../types/database'
+import type { Item, User, Role } from '../types/database'
+import { useTranslation } from '../i18n/hooks'
 import './Items.css'
 
-const Items: React.FC = () => {
+interface ItemsProps {
+  user: User & { role: Role }
+}
+
+const Items: React.FC<ItemsProps> = ({ user }) => {
+  const { t } = useTranslation()
   const [items, setItems] = useState<ItemWithStock[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -104,7 +110,7 @@ const Items: React.FC = () => {
     }
 
     try {
-      await itemsService.deleteItem(item.id)
+      await itemsService.deleteItem(item.id, user.id, user.name)
       showNotification('success', 'Item deleted successfully')
       loadItems()
     } catch (err) {
@@ -128,7 +134,7 @@ const Items: React.FC = () => {
       <div className="items-page">
         <div className="loading">
           <div className="loading-spinner"></div>
-          <p>Loading items...</p>
+          <p>{t('items.loading')}</p>
         </div>
       </div>
     )
@@ -137,8 +143,8 @@ const Items: React.FC = () => {
   return (
     <div className="items-page">
       <div className="page-header">
-        <h1>Inventory Items</h1>
-        <p>Manage your warehouse inventory and stock levels</p>
+        <h1>{t('items.page_title')}</h1>
+        <p>{t('items.page_description')}</p>
       </div>
 
       {notification && (
@@ -152,7 +158,7 @@ const Items: React.FC = () => {
         <div className="search-box">
           <input
             type="text"
-            placeholder="Search items by SKU or name..."
+            placeholder={t('items.search_placeholder')}
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
             className="search-input"
@@ -169,17 +175,17 @@ const Items: React.FC = () => {
               />
               <span className="toggle-slider"></span>
               <span className="toggle-text">
-                {showStockOnly ? 'Items with Stock' : 'All Items'}
+                {showStockOnly ? t('items.items_with_stock') : t('items.all_items')}
               </span>
             </label>
           </div>
         </div>
         <div className="controls-actions">
           <button className="btn-success" onClick={handleAddItem}>
-            + Add Item
+            {t('items.add_item')}
           </button>
           <button className="btn-primary" onClick={loadItems}>
-            Refresh
+            {t('items.refresh')}
           </button>
         </div>
       </div>
@@ -197,21 +203,21 @@ const Items: React.FC = () => {
         <table className="items-table">
           <thead>
             <tr>
-              <th>SKU</th>
-              <th>Name</th>
-              <th>Unit</th>
-              <th>Total Stock</th>
-              <th>Available</th>
-              <th>Status</th>
-              <th>Description</th>
-              <th>Actions</th>
+              <th>{t('items.sku')}</th>
+              <th>{t('items.name')}</th>
+              <th>{t('items.unit')}</th>
+              <th>{t('items.total_stock')}</th>
+              <th>{t('items.available')}</th>
+              <th>{t('items.status')}</th>
+              <th>{t('items.description')}</th>
+              <th>{t('items.actions')}</th>
             </tr>
           </thead>
           <tbody>
             {items.length === 0 && !loading ? (
               <tr>
                 <td colSpan={8} className="no-data">
-                  {searchQuery ? 'No items found matching your search.' : 'No items found. Please add some items to get started.'}
+                  {searchQuery ? t('items.no_search_results') : t('items.no_items')}
                 </td>
               </tr>
             ) : (
@@ -246,13 +252,15 @@ const Items: React.FC = () => {
                     >
                       ✏️
                     </button>
-                    <button 
-                      className="btn-delete"
-                      onClick={() => handleDeleteItem(item)}
-                      title="Delete item"
-                    >
-                      🗑️
-                    </button>
+                    {user.role.name === 'System Administrator' && (
+                      <button 
+                        className="btn-delete"
+                        onClick={() => handleDeleteItem(item)}
+                        title="Delete item (Admin only)"
+                      >
+                        🗑️
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))

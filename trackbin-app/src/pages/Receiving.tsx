@@ -436,7 +436,6 @@ const Receiving: React.FC = () => {
                   <th>Expected</th>
                   <th>Received</th>
                   <th>Variance</th>
-                  <th>User</th>
                 </tr>
               </thead>
               <tbody>
@@ -453,7 +452,6 @@ const Receiving: React.FC = () => {
                     <td className="center">
                       {getVarianceDisplay(receipt.total_expected || 0, receipt.total_received || 0)}
                     </td>
-                    <td>{receipt.user_name || 'Unknown'}</td>
                   </tr>
                 ))}
               </tbody>

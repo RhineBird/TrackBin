@@ -30,7 +30,7 @@ export const auditService = {
       .from('audit_logs')
       .select(`
         *,
-        users!inner(name)
+        users(name)
       `)
       .order('timestamp', { ascending: false })
 
@@ -67,7 +67,7 @@ export const auditService = {
 
     return (data || []).map(log => ({
       ...log,
-      user_name: log.users?.name,
+      user_name: log.details_json?.performed_by || log.users?.name || (log.user_id === '00000000-0000-0000-0000-000000000000' ? 'System' : 'Unknown'),
       entity_details: this.formatEntityDetails(log.entity, log.details_json),
       users: undefined
     }))
@@ -79,7 +79,7 @@ export const auditService = {
       .from('audit_logs')
       .select(`
         *,
-        users!inner(name)
+        users(name)
       `)
       .or(`entity.ilike.%${searchQuery}%,action_type.ilike.%${searchQuery}%,users.name.ilike.%${searchQuery}%`)
       .order('timestamp', { ascending: false })
@@ -91,7 +91,7 @@ export const auditService = {
 
     return (data || []).map(log => ({
       ...log,
-      user_name: log.users?.name,
+      user_name: log.details_json?.performed_by || log.users?.name || (log.user_id === '00000000-0000-0000-0000-000000000000' ? 'System' : 'Unknown'),
       entity_details: this.formatEntityDetails(log.entity, log.details_json),
       users: undefined
     }))
@@ -169,25 +169,62 @@ export const auditService = {
 
   // Format entity details for display
   formatEntityDetails(entity: string, details: any): string {
-    if (!details) return 'No details'
+    if (!details) return 'No details available'
 
     try {
       switch (entity) {
         case 'items':
-          return details.sku ? `${details.sku} - ${details.name || 'Unknown'}` : 'Item'
-        case 'stock_entries':
-          return `Quantity: ${details.quantity || 'Unknown'}`
-        case 'stock_movements':
-          return `Moved ${details.quantity || 'Unknown'} units`
+          if (details.changes) {
+            // This is an update operation
+            const changeList = Object.keys(details.changes).join(', ')
+            return `Updated item "${details.name}" (${details.sku}) - Changed: ${changeList}`
+          } else {
+            // This is a create or delete operation
+            return `Item "${details.name}" (SKU: ${details.sku})`
+          }
+        
         case 'receipts':
-          return `Receipt ${details.reference_code || 'Unknown'}`
+          return `Receipt "${details.reference_code}" from ${details.supplier} with ${details.total_items} item${details.total_items !== 1 ? 's' : ''}`
+        
         case 'shipments':
-          return `Shipment ${details.reference_code || 'Unknown'}`
+          return `Shipment "${details.reference_code}" to ${details.customer} with ${details.total_items} item${details.total_items !== 1 ? 's' : ''}`
+        
+        case 'stock_entries':
+          if (details.operation === 'receipt') {
+            if (details.initial_quantity) {
+              return `New stock created with ${details.initial_quantity} units`
+            }
+            return `Stock increased by ${details.quantity_added} units (${details.previous_quantity} → ${details.new_quantity})`
+          } else if (details.operation === 'shipment') {
+            if (details.result === 'stock_depleted') {
+              return `Stock depleted: shipped ${details.quantity_shipped} units (was ${details.previous_quantity})`
+            }
+            return `Stock reduced by ${details.quantity_shipped} units (${details.previous_quantity} → ${details.new_quantity})`
+          }
+          return `Stock quantity: ${details.quantity || 'Unknown'} units`
+        
+        case 'stock_movements':
+          const fromBin = details.from_bin ? ` from ${details.from_bin}` : ''
+          const toBin = details.to_bin ? ` to ${details.to_bin}` : ''
+          const reason = details.reason ? ` (${details.reason})` : ''
+          return `Moved ${details.quantity || 'Unknown'} units${fromBin}${toBin}${reason}`
+        
+        case 'users':
+          return `User "${details.name}" (${details.email})`
+        
         default:
-          return `${entity} modified`
+          // For unknown entities, try to display meaningful information
+          if (details.name) {
+            return `${entity.replace('_', ' ')} "${details.name}"`
+          }
+          if (details.reference_code) {
+            return `${entity.replace('_', ' ')} "${details.reference_code}"`
+          }
+          return `${entity.replace('_', ' ')} record`
       }
-    } catch {
-      return 'Invalid details'
+    } catch (error) {
+      console.error('Error formatting entity details:', error)
+      return 'Details formatting error'
     }
   },
 
@@ -209,6 +246,60 @@ export const auditService = {
       .join('\n')
 
     return csvContent
+  },
+
+  // Create audit log entry
+  async createAuditLog(
+    userId: string,
+    actionType: string,
+    entity: string,
+    entityId: string,
+    details?: any
+  ): Promise<void> {
+    console.log('Creating audit log:', { userId, actionType, entity, entityId, details })
+    
+    try {
+      let auditUserId = userId
+      let auditDetails = details || {}
+
+      // If we have user details in the details object, store them for display
+      if (details?.user_name) {
+        auditDetails = { ...details, performed_by: details.user_name }
+      }
+
+      // Handle different user ID formats
+      if (userId === 'system') {
+        auditUserId = '00000000-0000-0000-0000-000000000000'
+        auditDetails = { ...auditDetails, performed_by: 'System' }
+      } else if (userId && userId.startsWith('ace')) {
+        // This is an app_user ID, we'll store the user name in details for now
+        auditUserId = '00000000-0000-0000-0000-000000000001' // Use a known system user
+        auditDetails = { ...auditDetails, performed_by: details?.user_name || 'App User' }
+      }
+      
+      console.log('Final audit data:', { auditUserId, actionType, entity, entityId, auditDetails })
+      
+      const { data, error } = await supabase
+        .from('audit_logs')
+        .insert({
+          user_id: auditUserId,
+          action_type: actionType,
+          entity: entity,
+          entity_id: entityId,
+          details_json: auditDetails,
+          timestamp: new Date().toISOString()
+        })
+        .select()
+        
+      if (error) {
+        console.error('Audit log insert error:', error)
+      } else {
+        console.log('Audit log created successfully:', data)
+      }
+    } catch (error) {
+      console.error('Failed to create audit log:', error)
+      // Don't throw - audit logging should not break main functionality
+    }
   },
 
   // Subscribe to real-time audit log updates

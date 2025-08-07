@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import type { Item } from '../types/database'
+import { auditService } from './auditService'
 
 export interface ItemWithStock extends Item {
   total_quantity?: number
@@ -159,6 +160,15 @@ export const itemsService = {
       throw new Error(`Failed to create item: ${error.message}`)
     }
 
+    // Log audit entry
+    await auditService.createAuditLog(
+      'system',
+      'create',
+      'items',
+      data.id,
+      { sku: data.sku, name: data.name }
+    )
+
     return data
   },
 
@@ -183,11 +193,27 @@ export const itemsService = {
       throw new Error(`Failed to update item: ${error.message}`)
     }
 
+    // Log audit entry
+    await auditService.createAuditLog(
+      'system',
+      'update',
+      'items',
+      data.id,
+      { sku: data.sku, name: data.name, changes: updates }
+    )
+
     return data
   },
 
   // Delete item (set inactive)
-  async deleteItem(id: string): Promise<void> {
+  async deleteItem(id: string, userId?: string, userName?: string): Promise<void> {
+    // Get item details for audit log
+    const { data: item } = await supabase
+      .from('items')
+      .select('sku, name')
+      .eq('id', id)
+      .single()
+
     const { error } = await supabase
       .from('items')
       .update({ is_active: false })
@@ -195,6 +221,17 @@ export const itemsService = {
 
     if (error) {
       throw new Error(`Failed to delete item: ${error.message}`)
+    }
+
+    // Log audit entry
+    if (item) {
+      await auditService.createAuditLog(
+        userId || 'system',
+        'delete',
+        'items',
+        id,
+        { sku: item.sku, name: item.name, user_name: userName }
+      )
     }
   },
 
