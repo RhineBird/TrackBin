@@ -9,8 +9,6 @@ interface ItemsProps {
 }
 
 const Items: React.FC<ItemsProps> = ({ user }) => {
-  console.log('Items component - User:', user)
-  console.log('Items component - User role:', user?.role?.name)
   const [items, setItems] = useState<ItemWithStock[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -110,7 +108,7 @@ const Items: React.FC<ItemsProps> = ({ user }) => {
     }
 
     try {
-      await itemsService.deleteItem(item.id)
+      await itemsService.deleteItem(item.id, user.id, user.name)
       showNotification('success', 'Item deleted successfully')
       loadItems()
     } catch (err) {

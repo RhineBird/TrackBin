@@ -143,6 +143,20 @@ const AuditLogs: React.FC = () => {
     return entity.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
   }
 
+  const formatActionName = (action: string): string => {
+    switch (action.toLowerCase()) {
+      case 'create':
+      case 'insert':
+        return 'Created'
+      case 'update':
+        return 'Updated'
+      case 'delete':
+        return 'Deleted'
+      default:
+        return action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+    }
+  }
+
   if (loading && auditLogs.length === 0) {
     return (
       <div className="audit-logs-page">
@@ -180,7 +194,7 @@ const AuditLogs: React.FC = () => {
               <div className="stat-label">Active Users</div>
             </div>
             <div className="stat-card">
-              <div className="stat-value">{formatEntityName(stats.most_common_action)}</div>
+              <div className="stat-value">{formatActionName(stats.most_common_action)}</div>
               <div className="stat-label">Most Common Action</div>
             </div>
             <div className="stat-card">
@@ -316,7 +330,7 @@ const AuditLogs: React.FC = () => {
                     </td>
                     <td className="action-cell">
                       <span className={`action-badge ${getActionTypeColor(log.action_type)}`}>
-                        {formatEntityName(log.action_type)}
+                        {formatActionName(log.action_type)}
                       </span>
                     </td>
                     <td className="entity-cell">

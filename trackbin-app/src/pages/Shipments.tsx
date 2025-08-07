@@ -44,7 +44,6 @@ const Shipments: React.FC = () => {
         shipmentsService.getAvailableStock()
       ])
       
-      console.log('Shipments loaded:', shipmentsData.length, shipmentsData)
       setShipments(shipmentsData)
       setAvailableStock(stockData)
     } catch (err) {
@@ -439,7 +438,6 @@ const Shipments: React.FC = () => {
                   <th>Customer</th>
                   <th>Items</th>
                   <th>Total Qty</th>
-                  <th>User</th>
                 </tr>
               </thead>
               <tbody>
@@ -452,7 +450,6 @@ const Shipments: React.FC = () => {
                     <td>{shipment.customer}</td>
                     <td className="center">{shipment.total_items}</td>
                     <td className="center">{shipment.total_quantity}</td>
-                    <td>{shipment.user_name || 'Unknown'}</td>
                   </tr>
                 ))}
               </tbody>
