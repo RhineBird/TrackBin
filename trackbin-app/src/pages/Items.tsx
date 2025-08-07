@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { itemsService, type ItemWithStock } from '../services/itemsService'
 import ItemModal from '../components/ItemModal/ItemModal'
-import type { Item, User, Role } from '../types/database'
+import type { Item } from '../types/database'
+import { useAuth } from '../contexts/AuthContext'
 import { useTranslation } from '../i18n/hooks'
 import './Items.css'
 
-interface ItemsProps {
-  user: User & { role: Role }
-}
-
-const Items: React.FC<ItemsProps> = ({ user }) => {
+const Items: React.FC = () => {
+  const { user } = useAuth()
   const { t } = useTranslation()
   const [items, setItems] = useState<ItemWithStock[]>([])
   const [loading, setLoading] = useState(true)

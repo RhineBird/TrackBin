@@ -32,6 +32,7 @@ export interface MovementRequest {
   to_bin_id: string
   quantity: number
   reason: string
+  user_id: string
 }
 
 export const stockMovementService = {
@@ -200,7 +201,7 @@ export const stockMovementService = {
       p_to_bin_id: request.to_bin_id,
       p_quantity: request.quantity,
       p_reason: request.reason,
-      p_user_id: 'a0000000-0000-4000-8000-000000000001' // Default admin user for now
+      p_user_id: request.user_id
     })
 
     if (error) {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { stockStatusService } from '../services/stockStatusService'
+import { useAuth } from '../contexts/AuthContext'
 import './StatusChangeModal.css'
 
 interface StatusChangeModalProps {
@@ -23,6 +24,7 @@ const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
   onStatusChanged,
   stockEntry
 }) => {
+  const { getCurrentUserId } = useAuth()
   const [newStatus, setNewStatus] = useState<'available' | 'reserved' | 'quarantined' | 'damaged'>('available')
   const [reason, setReason] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -67,6 +69,12 @@ const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
       return
     }
 
+    const currentUserId = getCurrentUserId()
+    if (!currentUserId) {
+      setError('User not authenticated')
+      return
+    }
+
     setSubmitting(true)
     setError(null)
 
@@ -74,7 +82,8 @@ const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
       await stockStatusService.updateStockStatus({
         stockEntryId: stockEntry.id,
         newStatus,
-        reason: reason.trim()
+        reason: reason.trim(),
+        user_id: currentUserId
       })
 
       onStatusChanged()

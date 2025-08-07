@@ -1,14 +1,10 @@
 import React, { useState } from 'react'
-import { authService } from '../services/authService'
+import { useAuth } from '../contexts/AuthContext'
 import { useI18n } from '../i18n/hooks'
-import type { User, Role } from '../types/database'
 import './SignIn.css'
 
-interface SignInProps {
-  onSignIn: (user: User & { role: Role }) => void
-}
-
-const SignIn: React.FC<SignInProps> = ({ onSignIn }) => {
+const SignIn: React.FC = () => {
+  const { login } = useAuth()
   const { t } = useI18n()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -50,9 +46,7 @@ const SignIn: React.FC<SignInProps> = ({ onSignIn }) => {
     setIsLoading(true)
     
     try {
-      const response = await authService.login({ email, password })
-      authService.saveSession(response.user, response.session)
-      onSignIn(response.user)
+      await login(email, password)
     } catch (err) {
       setError(err instanceof Error ? err.message : t('auth.login_failed'))
     } finally {

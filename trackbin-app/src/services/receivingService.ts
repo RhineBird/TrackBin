@@ -44,6 +44,7 @@ export interface CreateReceiptRequest {
   reference_code: string
   supplier: string
   receipt_lines: CreateReceiptLineRequest[]
+  user_id: string
 }
 
 export interface CreateReceiptLineRequest {
@@ -204,7 +205,7 @@ export const receivingService = {
         id: receiptId,
         reference_code: request.reference_code,
         supplier: request.supplier,
-        received_by_user_id: 'a0000000-0000-4000-8000-000000000001'
+        received_by_user_id: request.user_id
       })
       .select()
       .single()

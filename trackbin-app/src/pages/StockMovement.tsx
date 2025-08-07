@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { stockMovementService, type StockMovementWithDetails, type ItemStockLocation, type BinWithLocation } from '../services/stockMovementService'
 import { itemsService } from '../services/itemsService'
 import StatusChangeModal from '../components/StatusChangeModal'
+import { useAuth } from '../contexts/AuthContext'
 import { useI18n } from '../i18n/hooks'
 import type { Item } from '../types/database'
 import './StockMovement.css'
@@ -15,6 +16,7 @@ interface MovementFormData {
 }
 
 const StockMovement: React.FC = () => {
+  const { getCurrentUserId } = useAuth()
   const { t } = useI18n()
   const [movements, setMovements] = useState<StockMovementWithDetails[]>([])
   const [items, setItems] = useState<Item[]>([])
@@ -155,10 +157,17 @@ const StockMovement: React.FC = () => {
     setSubmitting(true)
     setError(null)
 
+    const currentUserId = getCurrentUserId()
+    if (!currentUserId) {
+      showNotification('error', 'User not authenticated')
+      return
+    }
+
     try {
       await stockMovementService.moveStock({
         ...formData,
-        quantity: Number(formData.quantity)
+        quantity: Number(formData.quantity),
+        user_id: currentUserId
       })
       
       showNotification('success', t('stock_movement.stock_moved'))

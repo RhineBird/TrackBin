@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react'
 import { userService, type UserWithRole, type CreateUserRequest, type UpdateUserRequest } from '../services/userService'
 import type { Role } from '../types/database'
 import UserModal from '../components/UserModal'
+import { useAuth } from '../contexts/AuthContext'
 import { useI18n } from '../i18n/hooks'
 import './Users.css'
 
 const Users: React.FC = () => {
+  const { getCurrentUserId } = useAuth()
   const { t } = useI18n()
   const [users, setUsers] = useState<UserWithRole[]>([])
   const [roles, setRoles] = useState<Role[]>([])
@@ -87,12 +89,26 @@ const Users: React.FC = () => {
   }
 
   const handleModalSave = async (userData: CreateUserRequest | UpdateUserRequest) => {
+    const currentUserId = getCurrentUserId()
+    if (!currentUserId) {
+      showNotification('error', 'User not authenticated')
+      return
+    }
+
     try {
       if (modalMode === 'create') {
-        await userService.createUser(userData as CreateUserRequest)
+        const createRequest: CreateUserRequest = {
+          ...(userData as CreateUserRequest),
+          created_by: currentUserId
+        }
+        await userService.createUser(createRequest)
         showNotification('success', t('users.user_created'))
       } else {
-        await userService.updateUser(selectedUser!.id, userData as UpdateUserRequest)
+        const updateRequest: UpdateUserRequest = {
+          ...(userData as UpdateUserRequest),
+          updated_by: currentUserId
+        }
+        await userService.updateUser(selectedUser!.id, updateRequest)
         showNotification('success', t('users.user_updated'))
       }
       
