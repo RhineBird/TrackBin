@@ -48,6 +48,7 @@ const Receiving: React.FC = () => {
         receivingService.getBinsWithLocation()
       ])
       
+      console.log('Receipts loaded:', receiptsData.length, receiptsData)
       setReceipts(receiptsData)
       setItems(itemsData)
       setBins(binsData)

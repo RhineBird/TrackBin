@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import { itemsService, type ItemWithStock } from '../services/itemsService'
 import ItemModal from '../components/ItemModal/ItemModal'
-import type { Item } from '../types/database'
+import type { Item, User, Role } from '../types/database'
 import './Items.css'
 
-const Items: React.FC = () => {
+interface ItemsProps {
+  user: User & { role: Role }
+}
+
+const Items: React.FC<ItemsProps> = ({ user }) => {
+  console.log('Items component - User:', user)
+  console.log('Items component - User role:', user?.role?.name)
   const [items, setItems] = useState<ItemWithStock[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -246,13 +252,15 @@ const Items: React.FC = () => {
                     >
                       ✏️
                     </button>
-                    <button 
-                      className="btn-delete"
-                      onClick={() => handleDeleteItem(item)}
-                      title="Delete item"
-                    >
-                      🗑️
-                    </button>
+                    {user.role.name === 'System Administrator' && (
+                      <button 
+                        className="btn-delete"
+                        onClick={() => handleDeleteItem(item)}
+                        title="Delete item (Admin only)"
+                      >
+                        🗑️
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))

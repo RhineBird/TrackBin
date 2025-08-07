@@ -44,6 +44,7 @@ const Shipments: React.FC = () => {
         shipmentsService.getAvailableStock()
       ])
       
+      console.log('Shipments loaded:', shipmentsData.length, shipmentsData)
       setShipments(shipmentsData)
       setAvailableStock(stockData)
     } catch (err) {

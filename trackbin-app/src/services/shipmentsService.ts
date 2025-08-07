@@ -66,7 +66,7 @@ export const shipmentsService = {
       .from('shipments')
       .select(`
         *,
-        users!inner(name),
+        users(name),
         shipment_lines(
           id,
           quantity
@@ -99,7 +99,7 @@ export const shipmentsService = {
       .from('shipments')
       .select(`
         *,
-        users!inner(name),
+        users(name),
         shipment_lines(
           *,
           items!inner(id, sku, name, unit),
@@ -358,7 +358,7 @@ export const shipmentsService = {
       .from('shipments')
       .select(`
         *,
-        users!inner(name),
+        users(name),
         shipment_lines(
           id,
           quantity

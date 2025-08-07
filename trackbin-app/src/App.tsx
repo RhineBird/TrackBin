@@ -90,7 +90,7 @@ function AppContent() {
       <Layout user={user} onSignOut={handleSignOut}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/inventory" element={<Items />} />
+          <Route path="/inventory" element={<Items user={user} />} />
           <Route path="/receiving" element={<Receiving />} />
           <Route path="/move-stock" element={<StockMovement />} />
           <Route path="/shipments" element={<Shipments />} />

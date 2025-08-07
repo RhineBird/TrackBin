@@ -59,7 +59,7 @@ export const receivingService = {
       .from('receipts')
       .select(`
         *,
-        users!inner(name),
+        users(name),
         receipt_lines(
           id,
           quantity_expected,
@@ -94,7 +94,7 @@ export const receivingService = {
       .from('receipts')
       .select(`
         *,
-        users!inner(name),
+        users(name),
         receipt_lines(
           *,
           items!inner(id, sku, name, unit),
@@ -331,7 +331,7 @@ export const receivingService = {
       .from('receipts')
       .select(`
         *,
-        users!inner(name),
+        users(name),
         receipt_lines(
           id,
           quantity_expected,
