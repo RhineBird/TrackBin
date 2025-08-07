@@ -13,7 +13,8 @@
     "actions": "Actions",
     "confirm": "Confirm",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "clear": "Clear"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -291,6 +292,7 @@
     "page_description": "Manage incoming shipments and update inventory",
     "loading": "Loading receiving data...",
     "search_placeholder": "Search receipts by reference or supplier...",
+    "search": "Search",
     "new_receipt": "New Receipt",
     "cancel": "Cancel",
     "create_new_receipt": "Create New Receipt",
